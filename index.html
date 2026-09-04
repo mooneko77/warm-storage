@@ -1528,8 +1528,8 @@ function renderSettings(){
 
     <div class="set-card">
       <h3>☁️ 雲端同步（Firebase）</h3>
-      <div class="desc">輸入魔法代碼即可快速連線；資料存於你的私有 Firebase，手機／平板／電腦多端即時同步。</div>
-      <div class="form-row"><label>🔑 快速通關（魔法代碼）</label><input type="password" oninput="quickFillFB(this.value)" placeholder="輸入魔法代碼自動帶入..."></div>
+      <div class="desc">輸入魔法代碼即可快速連線；資料存於你的私有 Firebase，多設備即時同步。</div>
+      <div class="form-row"><label>🔑 魔法代碼</label><input type="password" oninput="quickFillFB(this.value)" placeholder="輸入魔法代碼自動帶入..."></div>
       <details style="margin:4px 0 12px">
         <summary style="font-size:13px;color:var(--primary-deep);cursor:pointer;font-weight:600">手動輸入設定（進階）</summary>
         <div class="form-grid" style="margin-top:12px">
@@ -1545,9 +1545,9 @@ function renderSettings(){
       <div class="fb-btn-row">
         <button class="btn primary" onclick="saveFirebaseCfg()">💾 儲存並連線</button>
         <button class="btn soft" onclick="syncNow()">🔄 立即同步</button>
-        <button class="btn danger" onclick="unbindFirebase()">解除綁定</button>
+        <button class="btn danger" onclick="unbindFirebase()">❌ 解除綁定</button>
       </div>
-      <div style="margin-top:14px" id="fbStatus" class="cloud-status ${cl}">${fb.ready?'✅ 已連線，資料即時同步中':(cfg?'⚠️ 尚未連線，請點「儲存並連線」':'🔌 尚未綁定（輸入魔法代碼 000800 快速連線）')}</div>
+      <div style="margin-top:14px" id="fbStatus" class="cloud-status ${cl}">${fb.ready?'✅ 已連線，資料即時同步中':(cfg?'⚠️ 尚未連線，請點「儲存並連線」':'🔌 尚未綁定')}</div>
     </div>
 
     <div class="set-card">
