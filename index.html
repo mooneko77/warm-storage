@@ -62,10 +62,11 @@ a{color:var(--primary-deep); text-decoration:none;}
 #topbar{
   position:sticky; top:0; z-index:50; display:flex; align-items:center; gap:10px;
   padding:12px 20px; background:rgba(255,248,231,.9); backdrop-filter:blur(10px);
-  border-bottom:1px solid var(--line); flex-wrap:wrap;
+  border-bottom:1px solid var(--line); flex-wrap:nowrap; overflow-x:auto;
 }
-#topbar .tb-title{font-size:18px;font-weight:700;}
-.search-wrap{flex:1; min-width:180px; max-width:420px; position:relative;}
+#topbar::-webkit-scrollbar { display:none; }
+#topbar .tb-title{font-size:18px;font-weight:700;flex-shrink:0;}
+.search-wrap{flex:1; min-width:100px; max-width:420px; position:relative;}
 .search-wrap input{width:100%;padding:10px 14px 10px 38px;border-radius:30px;border:1.5px solid var(--line);background:var(--card);outline:none;}
 .search-wrap .ico{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--text-light);}
 .sync-pill{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;padding:6px 12px;border-radius:30px;background:var(--card);border:1.5px solid var(--line);color:var(--text-light);}
@@ -87,8 +88,8 @@ a{color:var(--primary-deep); text-decoration:none;}
 
 /* ===== 卡片 ===== */
 .card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid rgba(243,228,198,.6);}
-.sec-title{display:flex;align-items:center;justify-content:space-between;margin:8px 2px 14px;}
-.sec-title h2{margin:0;font-size:18px;}
+.sec-title{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin:8px 2px 14px;}
+.sec-title h2{margin:0;font-size:18px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
 .sec-title .sub{color:var(--text-light);font-size:13px;}
 .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px;}
 .stat-card{padding:16px 18px;border-radius:var(--radius);background:var(--card);box-shadow:var(--shadow);position:relative;overflow:hidden;}
@@ -294,8 +295,11 @@ table.pv th{background:var(--bg2);position:sticky;top:0;}
   #mnav .mn .mi{font-size:20px;}
   #mnav .mn.active{color:var(--primary-deep);font-weight:700;background:var(--primary-soft);}
   #views{padding:16px 14px 90px;}
-  #topbar{padding:10px 14px;}
+  #topbar{padding:10px 12px; gap:8px;}
   .tb-title{display:none;}
+  .search-wrap input{padding:8px 12px 8px 32px; font-size:14px;}
+  .sync-pill{padding:6px 8px; font-size:12px;}
+  .top-btn{padding:7px 10px; font-size:13px;}
   .stat-grid{grid-template-columns:repeat(2,1fr);gap:10px;}
   .detail-wrap{grid-template-columns:1fr;}
   .stats-wrap{grid-template-columns:1fr;}
@@ -722,7 +726,7 @@ function renderHome(){
     </div>
     <div class="exp-zone-hero" onclick="navigate('#/expiry')" style="cursor:pointer">
       <div class="big">⏰</div>
-      <div style="flex:1"><b style="font-size:16px">即期品／到期專區</b>
+      <div style="flex:1"><b style="font-size:16px">集齊品／到期專區</b>
         <div style="font-size:13px;color:var(--text-light);margin-top:2px">管理有到期日的物品（化妝品、保養品），${urgentExp>0?`<b style="color:var(--danger)">${urgentExp} 件已到期或即將到期</b>`:'目前沒有需要處理的到期物品'}　→</div>
       </div>
     </div>
@@ -775,8 +779,8 @@ function renderCatList(){
 
   el.innerHTML = `
     <button class="back-btn" onclick="navigate('#/home')">← 返回</button>
-    <div class="sec-title"><h2 style="display:flex;align-items:center;gap:8px;"><span style="font-size:26px">${cat.icon}</span>${esc(cat.name)} <span class="badge orange">${items.length} 件</span></h2>
-      <div style="display:flex;gap:8px;align-items:center;">
+    <div class="sec-title"><h2><span style="font-size:26px">${cat.icon}</span>${esc(cat.name)} <span class="badge orange">${items.length} 件</span></h2>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
         <label class="switch" title="切換排序模式"><input type="checkbox" ${isCustomSort?'checked':''} onchange="toggleCustomSort('${cat.id}',this.checked)"><span class="slider"></span></label>
         <span style="font-size:12.5px;color:var(--text-light)">自訂排序</span>
         ${batchMode?`<button class="btn danger sm" onclick="exitBatch()">取消批量</button>`:`<button class="btn soft sm" onclick="enterBatch()">批量</button>`}
@@ -1261,7 +1265,7 @@ function renderManage(){
 
   el.innerHTML = `
     <div class="sec-title"><h2>🗂️ 品類管理</h2>
-      <div style="display:flex;gap:8px;align-items:center;">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
         <button class="btn ${editMode?'primary':'ghost'} sm" onclick="toggleManageSort()">${editMode?'✓ 完成排序':'✋ 編輯排序模式'}</button>
         <button class="btn primary sm" onclick="openCatForm(null)">＋ 新增品類</button>
       </div>
@@ -1499,7 +1503,7 @@ function renderExpiry(){
   };
   const grp=(t,arr)=>arr.length?`<div class="sec-title" style="margin-top:6px"><h2>${t}（${arr.length}）</h2></div><div class="row-list">${arr.map(row).join('')}</div>`:'';
   el.innerHTML = `
-    <div class="sec-title"><h2>⏰ 即期品／到期專區</h2><span class="sub">只顯示有填到期日的物品</span></div>
+    <div class="sec-title"><h2>⏰ 集齊品／到期專區</h2><span class="sub">只顯示有填到期日的物品</span></div>
     <div class="exp-zone-hero">
       <div class="big">🧴</div>
       <div style="flex:1"><b style="font-size:16px">到期管理</b>
