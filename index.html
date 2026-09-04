@@ -1,1893 +1,669 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh-TW">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="theme-color" content="#F7B32B">
-<title>暖暖收納 · 個人收藏管理</title>
-<!-- 拖拽排序 SortableJS -->
-<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
-<!-- Excel SheetJS -->
-<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
-<!-- Firebase compat（綁定後才啟用） -->
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<style>
-:root{
-  --bg:#FFF8E7; --bg2:#FFF3D4; --card:#FFFFFF; --card2:#FFFDF6;
-  --primary:#F7B32B; --primary-deep:#E89B1C; --primary-soft:#FFE7AE;
-  --accent:#FFD98E; --accent2:#FFC55C;
-  --text:#5A4632; --text-light:#9A8A74; --line:#F3E4C6;
-  --danger:#E57373; --danger-bg:#FDEBEB; --success:#7CB342; --success-bg:#EDF6E3;
-  --info:#6FA8DC; --info-bg:#EAF2FB;
-  --radius:18px; --radius-sm:12px;
-  --shadow:0 6px 22px rgba(247,179,43,.14);
-  --shadow-lg:0 14px 40px rgba(90,70,50,.16);
-}
-*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
-html,body{margin:0;padding:0;overflow-x:hidden;}
-body{
-  font-family:"Microsoft JhengHei","PingFang TC","Heiti TC","Noto Sans TC",sans-serif;
-  background:var(--bg); color:var(--text); line-height:1.5;
-  min-height:100vh; -webkit-overflow-scrolling:touch;
-}
-button{font-family:inherit; cursor:pointer; border:none; background:none; color:inherit;}
-input,select,textarea{font-family:inherit; font-size:15px; color:var(--text);}
-a{color:var(--primary-deep); text-decoration:none;}
-::-webkit-scrollbar{width:8px;height:8px;}
-::-webkit-scrollbar-thumb{background:#E8CF9A; border-radius:8px;}
-::-webkit-scrollbar-track{background:transparent;}
-
-/* ===== 布局 ===== */
-#app{display:flex; min-height:100vh;}
-#sidebar{
-  width:240px; flex-shrink:0; background:var(--card); border-right:1px solid var(--line);
-  padding:20px 14px; display:flex; flex-direction:column; gap:6px;
-  position:sticky; top:0; height:100vh; overflow-y:auto;
-}
-.brand{display:flex; align-items:center; gap:10px; padding:6px 10px 18px;}
-.brand-logo{width:42px;height:42px;border-radius:14px;background:linear-gradient(135deg,var(--primary),var(--accent2));
-  display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:var(--shadow);}
-.brand b{font-size:19px; letter-spacing:.5px;}
-.brand small{display:block;color:var(--text-light);font-weight:400;font-size:12px;}
-.nav-item{display:flex;align-items:center;gap:11px;padding:12px 14px;border-radius:14px;color:var(--text);
-  font-size:15px;transition:.15s;cursor:pointer;}
-.nav-item .ni{font-size:19px;}
-.nav-item:hover{background:var(--bg);}
-.nav-item.active{background:linear-gradient(135deg,var(--primary),var(--accent2)); color:#fff; font-weight:600; box-shadow:var(--shadow);}
-.side-foot{margin-top:auto;padding:12px 10px 4px;font-size:12px;color:var(--text-light);}
-
-#main{flex:1; min-width:0; display:flex; flex-direction:column;}
-#topbar{
-  position:sticky; top:0; z-index:50; display:flex; align-items:center; gap:10px;
-  padding:12px 20px; background:rgba(255,248,231,.9); backdrop-filter:blur(10px);
-  border-bottom:1px solid var(--line); flex-wrap:nowrap;
-}
-#topbar .tb-title{font-size:18px;font-weight:700;flex-shrink:0;}
-.search-wrap{flex:1 1 0%; min-width:0; max-width:420px; position:relative;}
-.search-wrap input{width:100%;padding:10px 14px 10px 38px;border-radius:30px;border:1.5px solid var(--line);background:var(--card);outline:none;}
-.search-wrap .ico{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--text-light);}
-.sync-pill{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;padding:6px 12px;border-radius:30px;background:var(--card);border:1.5px solid var(--line);color:var(--text-light);}
-.sync-pill.on{color:var(--success);border-color:#CBE5AC;background:var(--success-bg);}
-.sync-pill.off{color:var(--text-light);}
-.dot{width:8px;height:8px;border-radius:50%;background:#C9C2B4;display:inline-block;}
-.sync-pill.on .dot{background:var(--success);animation:pulse 1.6s infinite;}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
-.top-btn{display:inline-flex;align-items:center;gap:6px;padding:9px 14px;border-radius:30px;background:var(--primary);color:#fff;font-size:14px;font-weight:600;box-shadow:var(--shadow);}
-.top-btn.ghost{background:var(--card);color:var(--text);border:1.5px solid var(--line);box-shadow:none;}
-
-#views{padding:20px 20px 40px; max-width:1200px; width:100%; margin:0 auto;}
-.view{display:none;}
-.view.active{display:block;animation:fadeIn .25s;}
-@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-
-/* ===== 手機底部導航 ===== */
-#mnav{display:none;}
-
-/* ===== 卡片 ===== */
-.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid rgba(243,228,198,.6);}
-.sec-title{display:flex;align-items:center;justify-content:space-between;margin:8px 2px 14px;}
-.sec-title h2{margin:0;font-size:18px;}
-.sec-title .sub{color:var(--text-light);font-size:13px;}
-.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:22px;}
-#view-stats .stat-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;}
-.stat-card{padding:16px 18px;border-radius:var(--radius);background:var(--card);box-shadow:var(--shadow);position:relative;overflow:hidden;}
-.stat-card .v{font-size:26px;font-weight:700;}
-.stat-card .l{font-size:13px;color:var(--text-light);margin-top:2px;}
-.stat-card .em{position:absolute;right:-8px;top:-8px;font-size:52px;opacity:.10;}
-.cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;}
-.cat-card{padding:18px;border-radius:var(--radius);cursor:pointer;transition:.18s;background:var(--card);box-shadow:var(--shadow);position:relative;border:1px solid rgba(243,228,198,.6);}
-.cat-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg);}
-.cat-card .ico{width:52px;height:52px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:27px;margin-bottom:10px;}
-.cat-card h3{margin:0 0 4px;font-size:17px;}
-.cat-card .meta{font-size:13px;color:var(--text-light);}
-.cat-card .count-badge{position:absolute;top:14px;right:14px;background:var(--primary-soft);color:var(--primary-deep);font-size:12px;font-weight:700;padding:3px 9px;border-radius:20px;}
-
-/* ===== 排序狀態 ===== */
-.sort-ghost{opacity:.45;border:2px dashed var(--primary-deep)!important;background:var(--accent)!important;border-radius:var(--radius);}
-.sort-drag{opacity:.88;transform:scale(1.03);box-shadow:var(--shadow-lg)!important;z-index:999;}
-.sortable-ghost{opacity:.45;border:2px dashed var(--primary-deep)!important;background:var(--accent)!important;}
-.sortable-drag{opacity:.88;box-shadow:var(--shadow-lg)!important;}
-.sort-handle{cursor:grab;color:var(--text-light);font-size:18px;padding:2px 8px;user-select:none;}
-.sort-hint{font-size:12.5px;color:var(--primary-deep);background:var(--primary-soft);padding:6px 12px;border-radius:20px;}
-
-/* ===== 產品卡片設計（毛線倉庫風格：緊湊網格、精緻圓角與滿版圖片） ===== */
-.item-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;}
-.item-card{background:#fff;border-radius:16px;overflow:hidden;box-shadow:var(--shadow);border:1px solid rgba(243,228,198,.6);display:flex;flex-direction:column;position:relative;cursor:pointer;transition:.18s;}
-.item-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg);}
-.item-card .card-img-wrap{aspect-ratio:1/1;background:#FDF8ED;position:relative;padding:4px;}
-.item-card .card-img-inner{width:100%;height:100%;border-radius:12px;overflow:hidden;position:relative;}
-.item-card .card-img{width:100%;height:100%;object-fit:cover;object-position:center;}
-.item-card .card-noimg{width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--text-light);font-size:11px;font-weight:700;background:var(--bg2);}
-.item-card .card-price-badge{position:absolute;top:6px;left:6px;background:var(--success);color:#fff;font-size:9.5px;font-weight:700;padding:1px 6px;border-radius:8px;z-index:2;}
-.item-card .card-qty-badge{position:absolute;bottom:6px;right:6px;background:var(--primary);color:#fff;font-size:10.5px;font-weight:700;padding:1px 6px;border-radius:10px;z-index:2;min-width:20px;text-align:center;}
-.item-card .card-bottom{padding:8px;display:flex;flex-direction:column;justify-content:between;flex:1;background:#fff;}
-.item-card .card-name{font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3;margin-bottom:3px;}
-.item-card .card-sub-row{display:flex;align-items:center;gap:4px;margin-top:auto;overflow:hidden;font-size:10px;}
-.item-card .card-brand{font-weight:700;color:var(--primary-deep);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:50%;}
-.item-card .card-subitem{background:var(--primary-soft);color:var(--primary-deep);padding:1px 5px;border-radius:6px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;}
-
-.cat-page-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px;}
-.cat-page-head .cph-left{flex:0 0 auto;min-width:0;display:flex;justify-content:flex-start;}
-.cat-page-head .cph-center{flex:1;min-width:0;text-align:center;font-size:17px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap;overflow:hidden;}
-.cat-page-head .cph-center .cph-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;max-width:60vw;}
-.cat-page-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px;justify-content:center;}
-.item-card .ck{position:absolute;top:10px;left:10px;z-index:5;display:none;}
-.batch-mode .ck{display:block;}
-.item-card.batch-selected{outline:3px solid var(--primary);}
-.mv-btns{position:absolute;top:8px;right:8px;z-index:6;display:flex;flex-direction:column;gap:3px;}
-.mv-btns .btn{font-size:11px;padding:1px 8px;border-radius:10px;background:rgba(255,255,255,.92);border:1px solid var(--line);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.08);}
-.img-arrows{display:flex;flex-direction:column;gap:2px;position:absolute;top:2px;right:2px;z-index:7;}
-.img-arrows button{width:20px;height:20px;border-radius:8px;font-size:11px;background:rgba(255,255,255,.92);border:1px solid var(--line);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.1);}
-.mng-arrows{display:flex;flex-direction:column;gap:3px;flex-shrink:0;}
-.mng-arrows .btn{width:38px;height:34px;padding:0;justify-content:center;font-size:16px;border-radius:12px;background:var(--primary-soft);color:var(--primary-deep);}
-
-/* 欄位 DIY 編輯器 */
-.cf-editor{display:flex;flex-direction:column;gap:8px;margin:8px 0 4px;max-height:340px;overflow:auto;padding-right:4px;}
-.cf-row{background:var(--card2);border:1.5px solid var(--line);border-radius:14px;padding:9px 10px;}
-.cf-head{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
-.cf-name{flex:1;min-width:90px;padding:7px 10px;border-radius:10px;border:1.5px solid var(--line);background:var(--card);outline:none;font-size:13.5px;}
-.cf-type{padding:6px 8px;border-radius:10px;border:1.5px solid var(--line);background:var(--card);font-size:12.5px;outline:none;}
-.cf-mini{width:26px;height:26px;border-radius:9px;background:var(--primary-soft);color:var(--primary-deep);font-size:13px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;}
-.cf-mini.danger{background:var(--danger-bg);color:var(--danger);}
-.cf-sub{margin-top:7px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:12.5px;color:var(--text-light);}
-.cf-sub input[type=text]{flex:1;min-width:140px;padding:6px 10px;border-radius:10px;border:1.5px solid var(--line);background:var(--card);outline:none;font-size:12.5px;}
-.cf-sub label{display:inline-flex;align-items:center;gap:5px;color:var(--primary-deep);font-weight:600;cursor:pointer;}
-.cf-add{width:100%;margin-top:8px;padding:9px;border-radius:14px;border:1.5px dashed var(--primary);color:var(--primary-deep);background:var(--primary-soft);font-size:13.5px;font-weight:600;}
-.cf-img{display:flex;align-items:center;gap:8px;max-width:100%;}
-.cf-img input{flex:1;min-width:0;}
-.cf-img img{width:44px;height:44px;object-fit:cover;border-radius:10px;border:1.5px solid var(--line);}
-
-/* 到期專區 */
-.exp-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px;}
-.exp-badge.expired{background:var(--danger-bg);color:var(--danger);}
-.exp-badge.soon{background:#FDEBD8;color:#E67E22;}
-.exp-badge.ok{background:var(--success-bg);color:var(--success);}
-.exp-zone-hero{display:flex;align-items:center;gap:14px;background:linear-gradient(135deg,#FFF3D4,#FFE7AE);border-radius:18px;padding:18px 20px;margin-bottom:16px;border:1.5px solid #F3D58A;}
-.exp-zone-hero .big{font-size:34px;}
-
-.badge{font-size:11.5px;padding:2px 9px;border-radius:20px;font-weight:600;}
-.badge.orange{background:var(--primary-soft);color:var(--primary-deep);}
-.empty-state{text-align:center;color:var(--text-light);padding:64px 0 70px;}
-.empty-state .es-ico{font-size:48px;margin-bottom:12px;opacity:.8;}
-.empty-state span{font-size:13px;}
-
-/* ===== 列表行 ===== */
-.row-list{display:flex;flex-direction:column;gap:10px;}
-.row-item{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:16px;background:var(--card);box-shadow:var(--shadow);cursor:pointer;}
-.row-item .thumb{width:52px;height:52px;border-radius:12px;object-fit:cover;background:var(--bg2);flex-shrink:0;}
-.row-item .info{flex:1;min-width:0;}
-.row-item .info b{display:block;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.row-item .info span{font-size:12.5px;color:var(--text-light);}
-
-/* ===== 詳情頁 ===== */
-.detail-wrap{display:grid;grid-template-columns:minmax(200px,280px) 1fr;gap:20px;}
-.gallery{position:relative;}
-.gallery-main{width:100%;aspect-ratio:1/1 !important;border-radius:var(--radius);object-fit:cover;background:var(--bg2);box-shadow:var(--shadow);}
-.gallery-thumbs{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
-.gallery-thumbs img{width:56px;height:56px;aspect-ratio:1/1;border-radius:12px;object-fit:cover;cursor:pointer;border:2px solid transparent;}
-.gallery-thumbs img.on{border-color:var(--primary);}
-.detail-body{min-width:0;}
-.detail-body h2{margin:0 0 4px;font-size:24px;}
-.detail-cat{color:var(--primary-deep);font-size:13px;font-weight:600;}
-.kv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin:16px 0;}
-.kv{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:10px 13px;}
-.kv .k{font-size:12px;color:var(--text-light);}
-.kv .v{font-size:14.5px;font-weight:600;margin-top:2px;word-break:break-all;}
-.qty-box{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,var(--primary),var(--accent2));color:#fff;padding:10px 18px;border-radius:30px;font-weight:700;box-shadow:var(--shadow);}
-.detail-top-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
-.detail-top-bar .dt-actions{display:flex;gap:8px;flex-wrap:wrap;}
-.buy-link-card{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;margin-bottom:14px;flex-wrap:wrap;}
-.buy-link-info{display:flex;align-items:center;gap:8px;min-width:0;flex:1;}
-.buy-link-label{font-size:13.5px;font-weight:600;flex-shrink:0;}
-.buy-link-store{font-size:13px;color:var(--text-light);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;max-width:200px;}
-.detail-qty{margin:0 0 12px;width:100%;justify-content:center;}
-.stock-card-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;flex-wrap:wrap;}
-.stock-actions{display:flex;gap:8px;flex-shrink:0;}
-.btn-cute{border-radius:20px;padding:7px 14px;font-size:13px;font-weight:700;box-shadow:0 3px 10px rgba(0,0,0,.1);transition:.15s;}
-.btn-cute:active{transform:scale(.94);}
-.btn-in-cute{background:linear-gradient(135deg,#8BC34A,#689F38);color:#fff;}
-.btn-out-cute{background:linear-gradient(135deg,#FFB74D,#F57C00);color:#fff;}
-.btn{padding:10px 18px;border-radius:30px;font-size:14px;font-weight:600;transition:.15s;display:inline-flex;align-items:center;gap:6px;}
-.btn:active{transform:scale(.96);}
-.btn.primary{background:var(--primary);color:#fff;box-shadow:var(--shadow);}
-.btn.soft{background:var(--primary-soft);color:var(--primary-deep);}
-.btn.ghost{background:var(--card);border:1.5px solid var(--line);color:var(--text);}
-.btn.danger{background:var(--danger-bg);color:var(--danger);}
-.btn.success{background:var(--success);color:#fff;box-shadow:var(--shadow);}
-.btn.sm{padding:6px 12px;font-size:12.5px;}
-.link-btn{display:inline-flex;align-items:center;gap:6px;color:var(--primary-deep);font-size:13.5px;font-weight:600;}
-
-/* 流水 */
-.timeline{list-style:none;margin:0;padding:0;position:relative;}
-.timeline:before{content:'';position:absolute;left:10px;top:6px;bottom:6px;width:2px;background:var(--line);}
-.timeline li{position:relative;padding:8px 0 8px 34px;}
-.timeline li:before{content:'';position:absolute;left:5px;top:15px;width:12px;height:12px;border-radius:50%;background:var(--primary);border:2px solid #fff;box-shadow:0 0 0 2px var(--primary-soft);}
-.timeline li.out:before{background:var(--danger);box-shadow:0 0 0 2px var(--danger-bg);}
-.tl-head{font-weight:600;font-size:14px;}
-.tl-head .delta.in{color:var(--success);}
-.tl-head .delta.out{color:var(--danger);}
-.tl-meta{font-size:12px;color:var(--text-light);}
-
-/* 开關 */
-.switch{position:relative;width:46px;height:26px;display:inline-block;}
-.switch input{opacity:0;width:0;height:0;}
-.slider{position:absolute;inset:0;background:#DCD3C2;border-radius:30px;transition:.2s;cursor:pointer;}
-.slider:before{content:'';position:absolute;width:20px;height:20px;border-radius:50%;background:#fff;left:3px;top:3px;transition:.2s;box-shadow:0 2px 6px rgba(0,0,0,.2);}
-.switch input:checked + .slider{background:var(--primary);}
-.switch input:checked + .slider:before{transform:translateX(20px);}
-
-/* ===== 表單 ===== */
-.modal-overlay{position:fixed;inset:0;background:rgba(90,70,50,.45);backdrop-filter:blur(3px);z-index:200;display:none;align-items:flex-end;justify-content:center;}
-.modal-overlay.show{display:flex;}
-.modal{background:var(--card);width:100%;max-width:560px;max-height:92vh;overflow-y:auto;overflow-x:hidden;border-radius:24px 24px 0 0;padding:22px 20px 30px;animation:slideUp .25s;}
-@keyframes slideUp{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
-.modal h3{margin:0 0 16px;font-size:19px;}
-.form-row{margin-bottom:14px;}
-.form-row label{display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:var(--text);}
-.form-row label .req{color:var(--danger);}
-.form-row input,.form-row select,.form-row textarea{width:100%;max-width:100%;padding:11px 13px;border-radius:14px;border:1.5px solid var(--line);background:var(--card2);outline:none;transition:.15s;}
-.form-row input:focus,.form-row select:focus,.form-row textarea:focus{border-color:var(--primary);background:#fff;}
-.form-row textarea{resize:vertical;min-height:70px;}
-.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 12px;}
-.item-form-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
-.item-form-grid .full{grid-column:1/-1;}
-.item-form-grid > .form-row{min-width:0;}
-.item-form-grid input,
-.item-form-grid select{
-  height:44px;
-  padding:0 13px;
-  line-height:1.4;
-  box-sizing:border-box;
-  vertical-align:middle;
-  font-size:14px;
-}
-.item-form-grid select{
-  -webkit-appearance:none;
-  appearance:none;
-  background-color:var(--card2);
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-  background-repeat:no-repeat;
-  background-position:right 12px center;
-  background-size:12px;
-  padding-right:34px;
-}
-.item-form-grid input[type="date"]{
-  -webkit-appearance:none;
-  appearance:none;
-  background-color:var(--card2);
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='18' rx='2' ry='2'%3E%3C/rect%3E%3Cline x1='16' y1='2' x2='16' y2='6'%3E%3C/line%3E%3Cline x1='8' y1='2' x2='8' y2='6'%3E%3C/line%3E%3Cline x1='3' y1='10' x2='21' y2='10'%3E%3C/line%3E%3C/svg%3E");
-  background-repeat:no-repeat;
-  background-position:right 10px center;
-  background-size:16px;
-  padding-right:34px;
-  min-height:44px;
-  font-size:13px;
-}
-.item-form-grid input[type="date"]::-webkit-calendar-picker-indicator{display:none;opacity:0;-webkit-appearance:none;}
-.item-form-grid select:focus,
-.item-form-grid input[type="date"]:focus{background-color:#fff;}
-.form-section{font-size:13.5px;font-weight:700;color:var(--primary-deep);margin:20px 0 12px;padding-left:10px;border-left:3px solid var(--primary);}
-.img-upload{display:flex;flex-wrap:wrap;gap:10px;max-width:100%;}
-.img-up-box{width:74px;height:74px;border-radius:14px;border:2px dashed var(--accent2);display:flex;align-items:center;justify-content:center;color:var(--primary-deep);font-size:24px;cursor:pointer;background:var(--card2);}
-.img-thumb{width:74px;height:74px;border-radius:14px;object-fit:cover;position:relative;box-shadow:0 2px 8px rgba(0,0,0,.1);}
-.img-item{position:relative;}
-.img-item .rm{position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;background:var(--danger);color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.2);}
-.img-item .main-tag{position:absolute;left:4px;bottom:4px;background:var(--primary);color:#fff;font-size:10px;padding:1px 7px;border-radius:10px;}
-.img-item .setmain{position:absolute;right:4px;bottom:4px;background:rgba(255,255,255,.9);font-size:10px;padding:1px 7px;border-radius:10px;cursor:pointer;color:var(--primary-deep);}
-.btn-row{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;}
-
-/* ===== 出入庫表單（直觀式毛線倉庫風格） ===== */
-.stock-tabs{display:flex;background:var(--bg2);border-radius:16px 16px 0 0;padding:4px 4px 0;gap:4px;margin-bottom:0;}
-.stock-tab{flex:1;padding:12px 16px;border-radius:12px 12px 0 0;font-size:15px;font-weight:600;color:var(--text-light);background:transparent;transition:.15s;}
-.stock-tab.active{background:var(--card);color:var(--text);font-weight:700;box-shadow:0 -2px 8px rgba(0,0,0,.04);}
-.stock-tab-content{background:var(--card);border-radius:0 0 16px 16px;padding:18px 16px 20px;border:1.5px solid var(--line);border-top:none;margin-bottom:16px;}
-.stock-qty-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap;}
-.stock-preview{font-size:14px;color:var(--text-light);font-weight:600;flex-shrink:0;}
-.stock-preview b{color:var(--primary-deep);font-size:15px;}
-.qty-adjuster{display:flex;align-items:center;gap:0;background:var(--bg2);border-radius:14px;padding:3px;}
-.qty-btn{width:38px;height:38px;border-radius:11px;background:var(--card);color:var(--primary-deep);font-size:20px;font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,.08);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-.qty-btn:active{transform:scale(.92);}
-.qty-adjuster input{width:64px;height:38px;text-align:center;border:none;background:transparent;font-size:16px;font-weight:700;color:var(--text);outline:none;-moz-appearance:textfield;}
-.qty-adjuster input::-webkit-outer-spin-button,.qty-adjuster input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
-.stock-save-btn{width:100%;padding:15px;border-radius:16px;background:var(--primary);color:#fff;font-size:17px;font-weight:700;box-shadow:var(--shadow);}
-.stock-save-btn:active{transform:scale(.98);}
-
-/* ===== 設定 / 區塊 ===== */
-.set-card{padding:20px;border-radius:var(--radius);background:var(--card);box-shadow:var(--shadow);margin-bottom:18px;border:1px solid rgba(243,228,198,.6);}
-.set-card h3{margin:0 0 6px;font-size:17px;display:flex;align-items:center;gap:8px;}
-.set-card .desc{font-size:13px;color:var(--text-light);margin-bottom:14px;}
-.set-card .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px;}
-.fb-btn-row{display:flex;flex-wrap:nowrap;gap:8px;align-items:stretch;margin-top:12px;}
-.fb-btn-row .btn{flex:1;justify-content:center;padding:10px 6px;white-space:nowrap;font-size:13.5px;}
-.cloud-status{font-size:13px;padding:8px 12px;border-radius:12px;background:var(--bg2);}
-.cloud-status.ok{background:var(--success-bg);color:var(--success);}
-.cloud-status.err{background:var(--danger-bg);color:var(--danger);}
-
-/* ===== 表格（匯入預覽） ===== */
-.table-wrap{overflow:auto;max-height:320px;border:1px solid var(--line);border-radius:14px;}
-table.pv{width:100%;border-collapse:collapse;font-size:12.5px;background:#fff;}
-table.pv th,table.pv td{border-bottom:1px solid var(--line);padding:8px 10px;text-align:left;white-space:nowrap;max-width:200px;overflow:hidden;text-overflow:ellipsis;}
-table.pv th{background:var(--bg2);position:sticky;top:0;}
-.err-row td{background:var(--danger-bg);}
-
-/* ===== 統計 ===== */
-.stats-wrap{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
-.donut-wrap{display:flex;align-items:center;gap:20px;}
-.donut{width:150px;height:150px;border-radius:50%;background:conic-gradient(#F7B32B 0 var(--p1),#F28E8E var(--p1) calc(var(--p1)+var(--p2)),#7CB342 calc(var(--p1)+var(--p2)) calc(var(--p1)+var(--p2)+var(--p3)),#6FA8DC calc(var(--p1)+var(--p2)+var(--p3)) 100%);position:relative;flex-shrink:0;box-shadow:var(--shadow);}
-.donut:after{content:attr(data-n);position:absolute;inset:32px;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700;box-shadow:inset 0 0 0 1px var(--line);}
-.legend{flex:1;min-width:0;}
-.legend .li{display:flex;align-items:center;gap:8px;padding:5px 0;font-size:13.5px;}
-.legend .sw{width:12px;height:12px;border-radius:4px;}
-.bar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:13px;}
-.bar-row .bl{width:70px;flex-shrink:0;text-align:right;}
-.bar-row .bt{flex:1;height:16px;background:var(--bg2);border-radius:8px;overflow:hidden;}
-.bar-row .bf{height:100%;border-radius:8px;background:linear-gradient(90deg,var(--primary),var(--accent2));}
-
-/* toast */
-#toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%) translateY(20px);background:#5A4632;color:#fff;padding:11px 20px;border-radius:30px;font-size:14px;opacity:0;pointer-events:none;transition:.25s;z-index:999;box-shadow:0 8px 24px rgba(0,0,0,.25);max-width:88vw;}
-#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
-
-/* ===== 響應式 ===== */
-@media (max-width:900px){
-  #sidebar{display:none;}
-  #mnav{display:flex;position:fixed;bottom:0;left:0;right:0;background:rgba(255,255,255,.96);backdrop-filter:blur(12px);
-    border-top:1px solid var(--line);z-index:100;padding:6px 4px calc(6px + env(safe-area-inset-bottom));}
-  #mnav .mn{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 2px;font-size:10.5px;color:var(--text-light);border-radius:12px;}
-  #mnav .mn .mi{font-size:20px;}
-  #mnav .mn.active{color:var(--primary-deep);font-weight:700;background:var(--primary-soft);}
-  #views{padding:16px 14px 90px;}
-  #topbar{padding:8px 10px; gap:6px;}
-  #topbar .sync-pill{font-size:11px; padding:5px 8px; gap:4px;}
-  #topbar .top-btn{padding:6px 10px; font-size:12.5px;}
-  .tb-title{display:none;}
-  .cat-head{flex-direction:column;align-items:stretch;}
-  .cat-head-actions{justify-content:space-between;}
-  .fb-btn-row .btn{font-size:12px;padding:9px 4px;}
-  .stat-grid{grid-template-columns:repeat(2,1fr);gap:10px;}
-  #view-stats .stat-grid .stat-card{padding:12px 10px;}
-  #view-stats .stat-card .v{font-size:22px;}
-  #view-stats .stat-card .l{font-size:12px;}
-  .detail-wrap{grid-template-columns:1fr;}
-  .stats-wrap{grid-template-columns:1fr;}
-  .form-grid{grid-template-columns:1fr;}
-  .item-form-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
-  .cat-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));}
-  .item-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;}
-  .donut{width:120px;height:120px;}
-  .donut:after{inset:26px;font-size:15px;}
-}
-@media (min-width:901px){
-  .modal-overlay{align-items:center;}
-  .modal{border-radius:24px;}
-}
-@media (min-width:901px) and (max-width:1200px){
-  #sidebar{width:200px;}
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- 確保加入主畫面時顯示全螢幕 -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <title>毛線倉庫</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React & ReactDOM (React 18) -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    
+    <style>
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        body {
+            background-color: #FFFDF9;
+            color: #5C5446;
+            font-family: system-ui, -apple-system, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        @keyframes scaleIn {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        .animate-scale-in { animation: scaleIn 0.2s ease-out forwards; }
+    </style>
 </head>
-<body>
-<div id="app">
-  <!-- 側邊欄 -->
-  <aside id="sidebar">
-    <div class="brand">
-      <div class="brand-logo">🧶</div>
-      <div><b>暖暖收納</b><small>個人收藏管理</small></div>
-    </div>
-    <div class="nav-item" data-nav="home"><span class="ni">🏠</span>首頁</div>
-    <div class="nav-item" data-nav="manage"><span class="ni">🗂️</span>品類管理</div>
-    <div class="nav-item" data-nav="stats"><span class="ni">📊</span>統計看板</div>
-    <div class="nav-item" data-nav="settings"><span class="ni">⚙️</span>設定</div>
-    <div class="side-foot">📱 手機 · 平板 · 電腦多端同步<br>資料存於你的私人 Firebase</div>
-  </aside>
+<body class="pb-24 md:pb-8 selection:bg-amber-200">
+    <div id="root"></div>
 
-  <!-- 主區域 -->
-  <div id="main">
-    <header id="topbar">
-      <span class="tb-title">暖暖收納</span>
-      <div class="search-wrap">
-        <span class="ico">🔍</span>
-        <input id="globalSearch" placeholder="搜尋名稱、品牌、店鋪…" oninput="onGlobalSearch(this.value)">
-      </div>
-      <span id="syncPill" class="sync-pill off"><span class="dot"></span><span id="syncText">未連線雲端</span></span>
-      <button class="top-btn ghost" onclick="syncNow()">🔄 同步</button>
-    </header>
+    <script type="text/babel">
+        const { useState, useEffect, useMemo, useRef } = React;
 
-    <main id="views">
-      <section id="view-home" class="view"></section>
-      <section id="view-expiry" class="view"></section>
-      <section id="view-cat" class="view"></section>
-      <section id="view-detail" class="view"></section>
-      <section id="view-manage" class="view"></section>
-      <section id="view-stats" class="view"></section>
-      <section id="view-settings" class="view"></section>
-    </main>
-  </div>
-</div>
+        // ==========================================
+        // Firebase 連線設定
+        // ==========================================
+        const MY_FIREBASE_CONFIG = {
+            apiKey: "AIzaSyC9l_XKg0SwD59hquvTfOeFopTcKycM5KQ",
+            authDomain: "yarn-storage.firebaseapp.com",
+            projectId: "yarn-storage",
+            storageBucket: "yarn-storage.firebasestorage.app",
+            messagingSenderId: "355907288134",
+            appId: "1:355907288134:web:8aa9c0bcef363137415e47",
+            measurementId: "G-SJ2D0096Y3"
+        };
 
-<!-- 手機底部導航 -->
-<div id="mnav">
-  <div class="mn" data-nav="home"><span class="mi">🏠</span>首頁</div>
-  <div class="mn" data-nav="manage"><span class="mi">🗂️</span>品類</div>
-  <div class="mn" data-nav="stats"><span class="mi">📊</span>統計</div>
-  <div class="mn" data-nav="settings"><span class="mi">⚙️</span>設定</div>
-</div>
+        const platformFirebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const firebaseConfig = Object.keys(platformFirebaseConfig).length > 0 ? platformFirebaseConfig : MY_FIREBASE_CONFIG;
 
-<!-- 模態框 -->
-<div id="modalItem" class="modal-overlay" onclick="if(event.target===this)closeModal('modalItem')">
-  <div class="modal"></div>
-</div>
-<div id="modalStock" class="modal-overlay" onclick="if(event.target===this)closeModal('modalStock')">
-  <div class="modal"></div>
-</div>
-<div id="modalCat" class="modal-overlay" onclick="if(event.target===this)closeModal('modalCat')">
-  <div class="modal"></div>
-</div>
-<div id="modalImport" class="modal-overlay" onclick="if(event.target===this)closeModal('modalImport')">
-  <div class="modal" style="max-width:720px;"></div>
-</div>
-<div id="modalBatch" class="modal-overlay" onclick="if(event.target===this)closeModal('modalBatch')">
-  <div class="modal"></div>
-</div>
+        let db = null;
+        let auth = null;
+        let isFirebaseActive = false;
 
-<div id="toast"></div>
-<input type="file" id="fileExcel" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleExcelFile(this)">
-<input type="file" id="fileJSON" accept=".json" style="display:none" onchange="handleJSONFile(this)">
+        if (Object.keys(firebaseConfig).length > 0 && firebaseConfig.apiKey) {
+            try {
+                if (!firebase.apps.length) {
+                    firebase.initializeApp(firebaseConfig);
+                }
+                auth = firebase.auth();
+                db = firebase.firestore();
+                isFirebaseActive = true;
+            } catch (e) {
+                console.warn("Firebase 初始化失敗", e);
+            }
+        }
 
-<script>
-/* ============================================================
-   暖暖收納 · 個人收藏管理（融合毛線倉庫卡片與直觀出入庫系統）
-   ============================================================ */
+        function toDateLocal(timestamp) {
+            const d = new Date(timestamp || Date.now());
+            if (isNaN(d.getTime())) return new Date().toISOString().split('T')[0];
+            const pad = n => String(n).padStart(2, '0');
+            return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+        }
 
-const LS_KEY = 'warm_storage_v1';
-const FB_KEY = 'warm_storage_fb_v1';
-const PLATFORMS = ['淘寶','蝦皮','拼多多','天貓','京東','官網','實體店面','其他'];
-const FIELD_TYPES = [
-  {v:'text',  n:'文字'},
-  {v:'number',n:'數字'},
-  {v:'select',n:'選擇選項'},
-  {v:'date',  n:'日期'},
-  {v:'image', n:'圖片'},
-  {v:'link',  n:'連結'}
-];
-const PRESET_CATEGORIES = [
-  {id:'cat_yarn', name:'毛線', icon:'🧶', color:'#F7A35C', defaultUnit:'團', lowStock:2, titleField:'f_yarn_color',
-   customFields:[
-     {id:'f_yarn_brand', name:'品牌', type:'text'},
-     {id:'f_yarn_color', name:'顏色/色號', type:'text'},
-     {id:'f_yarn_cond', name:'品相', type:'select', options:['全新','近新','良好','一般','已拆用']},
-     {id:'f_yarn_mat', name:'材質', type:'text'}
-   ]},
-  {id:'cat_doll', name:'公仔', icon:'🧸', color:'#F7B32B', defaultUnit:'隻', lowStock:0, titleField:'f_doll_ip',
-   customFields:[
-     {id:'f_doll_ip', name:'IP', type:'text'},
-     {id:'f_doll_size', name:'尺寸', type:'text'},
-     {id:'f_doll_retired', name:'是否絕版', type:'select', options:['是','否']}
-   ]},
-  {id:'cat_idol', name:'偶像周邊', icon:'💿', color:'#F28E8E', defaultUnit:'個', lowStock:0, titleField:'f_idol_type',
-   customFields:[
-     {id:'f_idol_group', name:'團體名稱', type:'text'},
-     {id:'f_idol_album', name:'專輯名稱', type:'text'},
-     {id:'f_idol_member', name:'成員', type:'text'},
-     {id:'f_idol_type', name:'物品類型', type:'select', options:['小卡','娃娃','CD','吊飾','公仔','其他']}
-   ]},
-  {id:'cat_cosm', name:'化妝品保養品', icon:'💄', color:'#C9A2E8', defaultUnit:'件', lowStock:0, titleField:'f_cosm_sub',
-   customFields:[
-     {id:'f_cosm_brand', name:'品牌', type:'text'},
-     {id:'f_cosm_sub', name:'品類細分', type:'select', options:['底妝','粉底液','粉餅','口紅','腮紅液','腮紅膏','眼影','眼線','睫毛膏','精華','乳液','面霜','面膜','洗卸','香水','其他']},
-     {id:'f_cosm_cap', name:'容量', type:'text'},
-     {id:'f_cosm_shade', name:'色號', type:'text'},
-     {id:'f_cosm_exp', name:'到期日', type:'date', isExpiry:true}
-   ]}
-];
+        function AutocompleteInput({ label, name, value, options, onChange, placeholder, required }) {
+            const [isOpen, setIsOpen] = useState(false);
+            const inputRef = useRef(null);
 
-let state = {
-  v: 1,
-  updatedAt: Date.now(),
-  categories: [],
-  items: [],
-  fbConfig: null
-};
+            const filteredOptions = useMemo(() => {
+                return (options || []).filter(opt =>
+                    opt && opt.toLowerCase().includes((value || '').toLowerCase()) && opt !== value
+                );
+            }, [options, value]);
 
-let fb = { app:null, db:null, ready:false, listening:false, lastSync:0 };
-let currentCatId = null;
-let currentItemId = null;
-let sortModes = {};
-let batchMode = false, batchSel = new Set();
-let pendingImages = [];
-let importResult = null;
-
-// 表單內直觀出入庫狀態
-let formStockMode = 'in';
-let formStockDelta = 1;
-let formStockDate = '';
-let formStockNote = '';
-let formEditingHistory = [];
-
-function uid(){ return 'id_'+Date.now().toString(36)+Math.random().toString(36).slice(2,8); }
-function esc(s){ return String(s??'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-function num(v){ const n=parseFloat(v); return isNaN(n)?0:n; }
-function fmtTime(t){ if(!t) return '—'; const d=new Date(t); if(isNaN(d)) return '—'; return d.toLocaleString('zh-TW',{hour12:false}); }
-function fmtDate(t){ if(!t) return ''; const d=new Date(t); if(isNaN(d)) return ''; return d.toLocaleDateString('zh-TW'); }
-function toast(msg, ms=2000){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('show'), ms); }
-function getCat(id){ return state.categories.find(c=>c.id===id); }
-function getItem(id){ return state.items.find(i=>i.id===id); }
-function qtyOf(item){ let q=num(item.initialQty||0); for(const r of item.stockRecords||[]){ q += r.type==='in'?num(r.qty):-num(r.qty); } return q; }
-function totalSpend(item){ if(num(item.totalPrice||0)>0) return num(item.totalPrice); return num(item.price||0)*Math.max(1,num(item.initialQty||1)); }
-function itemTitle(item){
-  if(item && item.name && String(item.name).trim()) return String(item.name).trim();
-  const c = item ? getCat(item.categoryId) : null;
-  if(c && c.titleField && item.custom && item.custom[c.titleField]!=null && String(item.custom[c.titleField]).trim()!=='')
-    return String(item.custom[c.titleField]).trim();
-  return '（未命名）';
-}
-function getExpiryInfo(item){
-  const c=getCat(item.categoryId); if(!c) return null;
-  const f=(c.customFields||[]).find(x=>x.isExpiry && x.type==='date');
-  if(!f) return null;
-  const v=item.custom && item.custom[f.id];
-  if(!v || !String(v).trim()) return null;
-  const t=new Date(String(v));
-  if(isNaN(t.getTime())) return null;
-  const today=new Date(); today.setHours(0,0,0,0);
-  const exp=new Date(t.getFullYear(),t.getMonth(),t.getDate());
-  const diffDays=Math.round((exp-today)/86400000);
-  const status = diffDays<0 ? 'expired' : (diffDays<=30 ? 'soon' : 'ok');
-  return {item, field:f, date:t, diffDays, status};
-}
-function normalizeCategories(){
-  state.categories.forEach(c=>{
-    (c.customFields||[]).forEach(f=>{
-      if(!f.id) f.id = f.key || uid();
-      if(!f.name) f.name = f.key || f.id;
-      if(!f.type) f.type='text';
-      if(f.type==='select' && !Array.isArray(f.options)) f.options=[];
-      if(!('isExpiry' in f)) f.isExpiry=false;
-    });
-    if(!c.titleField){
-      const pick=['顏色/色號','IP','物品類型','品類細分','色號','成員'];
-      const f=c.customFields.find(x=>pick.includes(x.name)) || c.customFields[0];
-      c.titleField = f ? f.id : '';
-    }
-  });
-  state.items.forEach(it=>{
-    const c=getCat(it.categoryId); if(!c || !it.custom) return;
-    const remapped={};
-    c.customFields.forEach(f=>{
-      if(it.custom[f.id]!=null){ remapped[f.id]=it.custom[f.id]; }
-      else if(it.custom[f.name]!=null){ remapped[f.id]=it.custom[f.name]; }
-    });
-    it.custom = remapped;
-  });
-}
-
-function loadState(){
-  try{ const raw=localStorage.getItem(LS_KEY); if(raw){ const d=JSON.parse(raw); if(d && d.v===1){ state=Object.assign(state,d); normalizeCategories(); return; } } }catch(e){}
-  if(!state.categories.length){ state.categories = JSON.parse(JSON.stringify(PRESET_CATEGORIES)); }
-  normalizeCategories();
-  saveLocal();
-}
-function saveLocal(){ state.updatedAt=Date.now(); try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }catch(e){ toast('⚠️ 本地儲存空間不足'); } }
-function saveState(){ saveLocal(); cloudPushDebounced(); }
-
-function loadFBConfig(){ try{ const raw=localStorage.getItem(FB_KEY); if(raw){ state.fbConfig=JSON.parse(raw); } }catch(e){ state.fbConfig=null; } }
-function saveFBConfig(){ state.fbConfig ? localStorage.setItem(FB_KEY, JSON.stringify(state.fbConfig)) : localStorage.removeItem(FB_KEY); }
-async function initFirebase(){
-  if(!state.fbConfig || !state.fbConfig.apiKey) return;
-  try{
-    if(fb.app===null){ fb.app = firebase.initializeApp(state.fbConfig, 'warm'); }
-    if(state.fbConfig.measurementId && typeof firebase.analytics === 'function') {
-      firebase.analytics(fb.app);
-    }
-    fb.db = firebase.firestore(fb.app);
-    fb.ready = true;
-    updateSyncUI();
-    startRealtime();
-    await pullFromCloud(true);
-  }catch(e){ fb.ready=false; updateSyncUI(); console.error(e); }
-}
-async function testFirebase(){
-  if(!state.fbConfig || !state.fbConfig.apiKey){ toast('請先填寫 Firebase 設定'); return; }
-  try{
-    if(fb.app===null){ fb.app = firebase.initializeApp(state.fbConfig, 'warm'); }
-    if(state.fbConfig.measurementId && typeof firebase.analytics === 'function') {
-      firebase.analytics(fb.app);
-    }
-    fb.db = firebase.firestore(fb.app);
-    await fb.db.collection('warm_storage').doc('main').get();
-    fb.ready = true; updateSyncUI();
-    toast('✅ Firebase 連線成功');
-    startRealtime();
-    await pullFromCloud(false);
-  }catch(e){ 
-    console.error(e); 
-    fb.ready=false; 
-    updateSyncUI();
-    toast('❌ 連線失敗：'+ (e.message||'請檢查設定')); 
-  }
-}
-function updateSyncUI(){
-  const pill=document.getElementById('syncPill'); const txt=document.getElementById('syncText');
-  if(fb.ready){ pill.className='sync-pill on'; txt.textContent='雲端已同步'; }
-  else{ pill.className='sync-pill off'; txt.textContent= state.fbConfig?'雲端未連線':'未連線雲端'; }
-}
-function cloudDocRef(){ return fb.db.collection('warm_storage').doc('main'); }
-let pushTimer=null;
-function cloudPushDebounced(){ if(!fb.ready) return; clearTimeout(pushTimer); pushTimer=setTimeout(()=>cloudPush(), 600); }
-async function cloudPush(){
-  if(!fb.ready) return;
-  try{
-    const data = { json: JSON.stringify(state), updatedAt: Date.now() };
-    await cloudDocRef().set(data);
-    fb.lastSync=Date.now(); updateSyncUI();
-  }catch(e){ console.error('push fail',e); }
-}
-async function pullFromCloud(silent){
-  if(!fb.ready) return;
-  try{
-    const snap = await cloudDocRef().get();
-    if(snap.exists){
-      const remote = snap.data();
-      const remoteTs = num(remote.updatedAt);
-      if(remoteTs > state.updatedAt){
-        const d = JSON.parse(remote.json);
-        if(d && d.v===1){ state = Object.assign(state, d); saveLocal(); }
-        toast('☁️ 已從雲端載入最新資料');
-      } else if(remoteTs < state.updatedAt){
-        await cloudPush();
-      }
-    } else {
-      await cloudPush();
-    }
-    updateSyncUI(); renderAll();
-  }catch(e){ console.error('pull fail',e); }
-}
-function startRealtime(){
-  if(!fb.ready || fb.listening) return;
-  fb.listening = true;
-  cloudDocRef().onSnapshot((snap)=>{
-    if(!snap.exists) return;
-    const remote = snap.data();
-    if(num(remote.updatedAt) > state.updatedAt && num(remote.updatedAt) !== fb.lastSync){
-      try{
-        const d = JSON.parse(remote.json);
-        if(d && d.v===1){ state = Object.assign(state,d); saveLocal(); updateSyncUI(); renderAll(); toast('☁️ 其他裝置已更新資料'); }
-      }catch(e){}
-    }
-  }, (e)=>console.error('realtime err',e));
-}
-async function syncNow(){
-  if(!fb.ready){ if(state.fbConfig){ await testFirebase(); } else { toast('尚未綁定 Firebase，請到設定填寫'); } return; }
-  toast('🔄 同步中…');
-  await cloudPush(); await pullFromCloud(false); toast('✅ 同步完成');
-}
-function unbindFirebase(){
-  if(fb.app){ try{ firebase.deleteApp(fb.app); }catch(e){} }
-  fb = { app:null,db:null,ready:false,listening:false,lastSync:0 };
-  state.fbConfig=null; saveFBConfig(); updateSyncUI(); toast('已解除雲端綁定'); renderSettings();
-}
-function quickFillFB(val){
-  if(val==='000800'){
-    document.getElementById('fb_apikey').value='AIzaSyAxDvYOOiWWcAgxvhKXUfMmXP5w_yUlphg';
-    document.getElementById('fb_auth').value='warm-storage.firebaseapp.com';
-    document.getElementById('fb_project').value='warm-storage';
-    document.getElementById('fb_bucket').value='warm-storage.firebasestorage.app';
-    document.getElementById('fb_sender').value='799184637539';
-    document.getElementById('fb_appid').value='1:799184637539:web:8fd7f2e80b47047bfeb256';
-    document.getElementById('fb_measurement').value='G-35BBGQSRZF';
-    toast('✨ 魔法代碼生效！已自動填入設定');
-  }
-}
-
-function navigate(hash){
-  if (location.hash === hash || (location.hash === '' && hash === '#/home')) {
-    router();
-  } else {
-    location.hash = hash;
-  }
-}
-window.addEventListener('hashchange', router);
-function router(){
-  const h = location.hash.replace(/^#\/?/,'') || 'home';
-  const parts = h.split('/');
-  batchMode=false; batchSel.clear();
-  if(parts[0]==='cat'){ currentCatId=parts[1]; showView('view-cat'); renderCatList(); }
-  else if(parts[0]==='item'){ currentItemId=parts[1]; showView('view-detail'); renderDetail(); }
-  else if(parts[0]==='expiry'){ showView('view-expiry'); renderExpiry(); }
-  else if(parts[0]==='manage'){ showView('view-manage'); renderManage(); }
-  else if(parts[0]==='stats'){ showView('view-stats'); renderStats(); }
-  else if(parts[0]==='settings'){ showView('view-settings'); renderSettings(); }
-  else { showView('view-home'); renderHome(); }
-  syncNav();
-}
-function showView(id){
-  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-}
-function syncNav(){
-  const h = location.hash.replace(/^#\/?/,'') || 'home';
-  let key='home';
-  if(h.startsWith('cat') || h.startsWith('item') || h.startsWith('manage')) key='manage';
-  else if(h.startsWith('stats')) key='stats';
-  else if(h.startsWith('settings')) key='settings';
-  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active', n.dataset.nav===key));
-  document.querySelectorAll('#mnav .mn').forEach(n=>n.classList.toggle('active', n.dataset.nav===key));
-}
-document.querySelectorAll('.nav-item, #mnav .mn').forEach(el=>{
-  el.addEventListener('click', ()=>navigate('#/'+el.dataset.nav));
-});
-
-function renderHome(){
-  const el=document.getElementById('view-home');
-  const totalItems = state.items.length;
-  const totalSpendSum = state.items.reduce((s,i)=>s+totalSpend(i),0);
-  const expiryItems = state.items.map(getExpiryInfo).filter(Boolean);
-  const urgentExp = expiryItems.filter(e=>e.status!=='ok').length;
-  const catCount = state.categories.length;
-  const catCards = [...state.categories].map(c=>{
-    const items = state.items.filter(i=>i.categoryId===c.id);
-    return `<div class="cat-card" data-id="${c.id}" onclick="openCat('${c.id}')" title="點擊進入">
-      <div class="count-badge">${items.length} 件</div>
-      <div class="ico" style="background:${c.color}22">${c.icon}</div>
-      <h3>${esc(c.name)}</h3>
-      <div class="meta">${items.length>0?`共 ${items.reduce((s,i)=>s+Math.max(0,qtyOf(i)),0)}`:'尚無物品'}</div>
-    </div>`;
-  }).join('') || `<div style="grid-column:1/-1;text-align:center;color:var(--text-light);padding:40px;">還沒有品類，<a href="#/manage">前往品類管理</a>新增</div>`;
-
-  el.innerHTML = `
-    <div class="stat-grid">
-      <div class="stat-card"><span class="em">📦</span><div class="v">${totalItems}</div><div class="l">物品總數</div></div>
-      <div class="stat-card"><span class="em">💰</span><div class="v">$${totalSpendSum.toLocaleString()}</div><div class="l">總花費</div></div>
-      <div class="stat-card"><span class="em">🗂️</span><div class="v">${catCount}</div><div class="l">品類數</div></div>
-      <div class="stat-card" style="cursor:pointer" onclick="navigate('#/expiry')"><span class="em">⏰</span><div class="v">${urgentExp}</div><div class="l">到期提醒</div></div>
-    </div>
-    <div class="sec-title"><h2>我的收藏</h2><span class="sub">長按可拖拽排序</span></div>
-    <div class="cat-grid" id="homeCatGrid">${catCards}</div>`;
-
-  if(window.Sortable && document.getElementById('homeCatGrid')){
-    new Sortable(document.getElementById('homeCatGrid'), {
-      animation:200, delay:600, delayOnTouchOnly:true,
-      ghostClass:'sortable-ghost', dragClass:'sortable-drag', chosenClass:'sort-ghost',
-      onEnd:()=>{ saveCategoryOrderFromDom('homeCatGrid'); }
-    });
-  }
-}
-function saveCategoryOrderFromDom(gridId){
-  const grid=document.getElementById(gridId);
-  if(!grid) return;
-  const order=[...grid.querySelectorAll('.cat-card')].map(n=>n.dataset.id);
-  state.categories.sort((a,b)=>(order.indexOf(a.id)-order.indexOf(b.id)));
-  state.categories.forEach((c,i)=>c.order=i);
-  saveState();
-}
-function openCat(id){ navigate('#/cat/'+id); }
-
-let filterState = { q:'' };
-function renderCatList(){
-  const cat = getCat(currentCatId);
-  if(!cat){ navigate('#/home'); return; }
-  const el = document.getElementById('view-cat');
-  let items = state.items.filter(i=>i.categoryId===cat.id);
-  const q = (filterState.q||'').trim().toLowerCase();
-  if(q){
-    items = items.filter(i=>{
-      const c = getItemFieldText(i);
-      return c.toLowerCase().includes(q);
-    });
-  }
-
-  const isCustomSort = sortModes['cat:'+cat.id]===true;
-  if(!isCustomSort){
-    items = [...items].sort((a,b)=> (num(b.createdAt||0))-(num(a.createdAt||0)));
-  }
-
-  el.innerHTML = `
-    <div class="cat-page-head">
-      <div class="cph-left"><button class="btn ghost sm" onclick="navigate('#/home')">← 返回</button></div>
-      <div class="cat-page-center cph-center"><span class="cph-name">${esc(cat.name)}</span><span class="badge orange">${items.length}</span></div>
-      <div class="cph-right"></div>
-    </div>
-    <div class="cat-page-actions">
-      <label class="switch" title="切換排序模式"><input type="checkbox" ${isCustomSort?'checked':''} onchange="toggleCustomSort('${cat.id}',this.checked)"><span class="slider"></span></label>
-      <span style="font-size:12.5px;color:var(--text-light)">自訂排序</span>
-      ${batchMode?`<button class="btn danger sm" onclick="exitBatch()">取消批量</button>`:`<button class="btn soft sm" onclick="enterBatch()">批量</button>`}
-      <button class="btn primary sm" onclick="openItemForm(null,'${cat.id}')">＋ 新增物品</button>
-    </div>
-    ${items.length===0?`<div class="empty-state"><div class="es-ico">${cat.icon}</div>此品類還沒有物品<br><span>點「＋ 新增物品」開始收納</span></div>`:''}
-    <div class="item-grid ${batchMode?'batch-mode':''}" id="catItemGrid">
-      ${items.map(i=>itemCardHTML(i,isCustomSort)).join('')}
-    </div>
-    ${batchMode?`<div style="position:sticky;bottom:80px;margin-top:14px;background:var(--card);border-radius:18px;box-shadow:var(--shadow-lg);padding:12px 16px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;border:1.5px solid var(--primary);">
-      <b style="font-size:13.5px">已選 <span id="batchCount">${batchSel.size}</span> 項</b>
-      <button class="btn soft sm" onclick="batchChangeCat()">改品類</button>
-      <button class="btn danger sm" onclick="batchDelete()">刪除</button>
-    </div>`:''}`;
-
-  if(isCustomSort && window.Sortable && document.getElementById('catItemGrid')){
-    new Sortable(document.getElementById('catItemGrid'), {
-      animation:200, delay:600, delayOnTouchOnly:true,
-      ghostClass:'sortable-ghost', dragClass:'sortable-drag',
-      onEnd:()=>{
-        const grid=document.getElementById('catItemGrid');
-        const order=[...grid.querySelectorAll('.item-card')].map(n=>n.dataset.id);
-        state.items.sort((a,b)=>(order.indexOf(a.id)-order.indexOf(b.id)));
-        state.items.forEach((i,k)=>i.customOrder=k);
-        saveState();
-      }
-    });
-  }
-}
-
-function getItemFieldText(item){
-  const c=getCat(item.categoryId);
-  const parts=[item.name, item.store||'', item.platform||''];
-  if(c){ c.customFields.forEach(f=>{ const v=item.custom?item.custom[f.id]:''; if(v) parts.push(v); }); }
-  return parts.join(' ');
-}
-function toggleCustomSort(catId, on){ sortModes['cat:'+catId]=on; renderCatList(); if(on) toast('已開啟自訂排序，長按拖拽調整順序'); }
-
-/* 毛線倉庫風格產品卡片：左上角綠色價格標籤、右下角琥珀色庫存數、底部第一行名稱、第二行品牌＋品項橫排 */
-function itemCardHTML(i, customMode){
-  const mainImg = (i.images||[]).find(im=>im.isMain) || (i.images||[])[0];
-  const q = qtyOf(i);
-  const title = itemTitle(i);
-  const cat = getCat(i.categoryId);
-  const brandField = cat ? (cat.customFields||[]).find(f=>f.name==='品牌') : null;
-  const brand = brandField && i.custom ? (i.custom[brandField.id]||'') : '';
-  const hasName = !!(i.name && String(i.name).trim());
-  const subItem = (hasName && cat && cat.titleField && i.custom) ? (i.custom[cat.titleField]||'') : '';
-  const price = i.price!=null && i.price!=='' ? num(i.price) : null;
-  const mv = customMode?`<div class="mv-btns" onclick="event.stopPropagation()"><button class="btn soft sm" onclick="moveItem('${i.id}',-1)">↑</button><button class="btn soft sm" onclick="moveItem('${i.id}',1)">↓</button></div>`:'';
-
-  return `<div class="item-card" data-id="${i.id}" onclick="openItem('${i.id}')">
-    ${batchMode?`<input type="checkbox" class="ck" ${batchSel.has(i.id)?'checked':''} onclick="event.stopPropagation();toggleBatchSel('${i.id}')">`:''}
-    ${mv}
-    <div class="card-img-wrap">
-      <div class="card-img-inner">
-        ${mainImg?`<img class="card-img" src="${mainImg.dataUrl}" alt="">`:`<div class="card-noimg">${cat?.icon||'📦'}</div>`}
-        ${price!=null?`<span class="card-price-badge">$${price}</span>`:''}
-        <span class="card-qty-badge">${q}</span>
-      </div>
-    </div>
-    <div class="card-bottom">
-      <span class="card-name">${esc(title)}</span>
-      <div class="card-sub-row">
-        ${brand?`<span class="card-brand">${esc(brand)}</span>`:''}
-        ${subItem?`<span class="card-subitem">${esc(subItem)}</span>`:''}
-      </div>
-    </div>
-  </div>`;
-}
-
-function moveItem(id, dir){
-  const i=state.items.findIndex(x=>x.id===id), j=i+dir;
-  if(i<0||j<0||j>=state.items.length) return;
-  [state.items[i],state.items[j]]=[state.items[j],state.items[i]];
-  state.items.forEach((k,idx)=>k.customOrder=idx);
-  saveState(); renderCatList();
-}
-function openItem(id){ navigate('#/item/'+id); }
-
-function enterBatch(){ batchMode=true; batchSel.clear(); renderCatList(); }
-function exitBatch(){ batchMode=false; batchSel.clear(); renderCatList(); }
-function toggleBatchSel(id){ batchSel.has(id)?batchSel.delete(id):batchSel.add(id); document.getElementById('batchCount').textContent=batchSel.size; }
-function batchChangeCat(){
-  if(!batchSel.size){ toast('請先勾選物品'); return; }
-  const opts=state.categories.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
-  showModal('modalBatch', `
-    <h3>批量修改品類</h3>
-    <div class="form-row"><label>移動到品類</label><select id="bCatSel">${opts}</select></div>
-    <div class="btn-row"><button class="btn ghost" onclick="closeModal('modalBatch')">取消</button><button class="btn primary" onclick="doBatchChangeCat()">確認</button></div>`);
-}
-function doBatchChangeCat(){
-  const target=document.getElementById('bCatSel').value;
-  state.items.forEach(i=>{ if(batchSel.has(i.id)){ i.categoryId=target; } });
-  closeModal('modalBatch'); batchMode=false; batchSel.clear(); saveState(); renderCatList(); toast('✅ 已更新');
-}
-function batchDelete(){
-  if(!batchSel.size){ toast('請先勾選物品'); return; }
-  if(!confirm(`確定刪除選中的 ${batchSel.size} 件物品？`)) return;
-  state.items = state.items.filter(i=>!batchSel.has(i.id));
-  batchMode=false; batchSel.clear(); saveState(); renderCatList(); toast('已刪除');
-}
-
-function renderDetail(){
-  const item = getItem(currentItemId);
-  if(!item){ navigate('#/home'); return; }
-  const cat = getCat(item.categoryId);
-  const el = document.getElementById('view-detail');
-  const mainImg = (item.images||[]).find(im=>im.isMain) || (item.images||[])[0];
-  const imgs = item.images||[];
-  const q = qtyOf(item);
-  const inSum = (item.stockRecords||[]).filter(r=>r.type==='in').reduce((s,r)=>s+num(r.qty),0);
-  const outSum = (item.stockRecords||[]).filter(r=>r.type==='out').reduce((s,r)=>s+num(r.qty),0);
-
-  let kv = '';
-  const addKV=(k,v)=>{ if(v!=='' && v!=null && v!==undefined) kv+=`<div class="kv"><div class="k">${k}</div><div class="v">${v}</div></div>`; };
-  addKV('品類', cat?`${cat.icon} ${esc(cat.name)}`:'');
-  addKV('庫存數量', `${q}`);
-  if(cat){ cat.customFields.forEach(f=>{
-    const val = item.custom ? item.custom[f.id] : undefined;
-    if(val===undefined || val===null || String(val)==='') return;
-    if(f.type==='image'){
-      addKV(esc(f.name), `<img src="${esc(val)}" style="width:60px;height:60px;object-fit:cover;border-radius:12px;border:1.5px solid var(--line)" onerror="this.style.display='none'">`);
-    } else if(f.type==='link'){
-      addKV(esc(f.name), `<a class="link-btn" href="#" onclick="window.open('${esc(val)}','_blank','noopener');return false;">↗ ${esc(val)}</a>`);
-    } else if(f.type==='date'){
-      const d=new Date(String(val));
-      const disp = isNaN(d)? esc(val) : fmtDate(val);
-      const exp = f.isExpiry ? getExpiryInfo(item) : null;
-      addKV(esc(f.name), disp + (exp?` <span class="exp-badge ${exp.status}">${exp.status==='expired'?'已到期':exp.status==='soon'?`剩 ${exp.diffDays} 天`:'即期品'}</span>`:''));
-    } else {
-      addKV(esc(f.name), esc(val));
-    }
-  }); }
-  if(item.platform) addKV('購買平台', esc(item.platform));
-  if(item.buyTime) addKV('購買時間', fmtDate(item.buyTime));
-  if(item.price!=null && item.price!=='') addKV('購買單價', '$'+num(item.price));
-  if(item.totalPrice!=null && item.totalPrice!=='') addKV('實付總價', '$'+num(item.totalPrice));
-  if(item.note) addKV('備註', esc(item.note));
-
-  const records = (item.stockRecords||[]).slice().sort((a,b)=>num(b.time)-num(a.time));
-  const tl = records.map((r,idx)=>`
-    <li class="${r.type==='out'?'out':''}">
-      <div class="tl-head" style="display:flex;justify-content:space-between;align-items:center;">
-        <span>${r.type==='in'?'📥 入庫':r.type==='out'?'📤 出庫':'📝 '+esc(r.type)} <span class="delta ${r.type==='in'?'in':'out'}">${r.type==='in'?'+':'-'}${num(r.qty)}</span></span>
-        <button class="btn danger sm" style="padding:2px 8px;font-size:10px;" onclick="deleteDetailHistoryRecord('${item.id}','${r.id||idx}')">刪除</button>
-      </div>
-      <div class="tl-meta">${fmtTime(r.time)}${r.note?' · '+esc(r.note):''}</div>
-    </li>`).join('') || `<li><div class="tl-meta">尚無出入庫記錄</div></li>`;
-
-  el.innerHTML = `
-    <div class="detail-top-bar">
-      <button class="btn ghost" onclick="navigate('#/cat/${item.categoryId}')">← 返回${cat?' '+esc(cat.name):''}</button>
-      <div class="dt-actions">
-        <button class="btn soft" onclick="openItemForm('${item.id}')">✏️ 編輯</button>
-        <button class="btn ghost" onclick="duplicateItem('${item.id}')">📄 複製</button>
-        <button class="btn danger" onclick="deleteItem('${item.id}')">🗑 刪除</button>
-      </div>
-    </div>
-    <div class="detail-wrap">
-      <div class="gallery card" style="padding:14px">
-        ${mainImg?`<img class="gallery-main" src="${mainImg.dataUrl}" alt="">`:`<div class="gallery-main noimg" style="display:flex;align-items:center;justify-content:center;font-size:64px">${cat?.icon||'📦'}</div>`}
-        ${imgs.length>1?`<div class="gallery-thumbs" id="detailThumbs">${imgs.map((im,idx)=>`<div style="position:relative"><img src="${im.dataUrl}" class="${im.isMain?'on':''}" onclick="setMainView(${idx})" alt=""><div class="img-arrows"><button onclick="moveDetailImg(${idx},-1)">↑</button><button onclick="moveDetailImg(${idx},1)">↓</button></div></div>`).join('')}</div>`:''}
-      </div>
-      <div class="detail-body">
-        <div class="detail-cat">${cat?esc(cat.name):''}</div>
-        <h2>${esc(itemTitle(item))}</h2>
-        <div class="kv-grid">${kv}</div>
-        ${item.buyLink?`<div class="card buy-link-card">
-          <div class="buy-link-info">
-            <span class="buy-link-label">🔗 商品連結</span>
-            ${item.store?`<span class="buy-link-store" title="${esc(item.store)}">🏪 ${esc(item.store)}</span>`:''}
-          </div>
-          <button class="btn primary sm" onclick="openItemLink('${item.id}')">↗ 前往購買頁</button>
-        </div>`:''}
-        <div class="qty-box detail-qty">📦 目前庫存：${q}　·　建檔 ${num(item.initialQty||0)} ＋入 ${inSum} −出 ${outSum}</div>
-        <div class="card" style="padding:18px">
-          <div class="stock-card-head">
-            <h3 style="margin:0;font-size:16px">🧾 出入庫歷史流水</h3>
-            <div class="stock-actions">
-              <button class="btn-cute btn-in-cute" onclick="openStockForm('in')">📥 入庫</button>
-              <button class="btn-cute btn-out-cute" onclick="openStockForm('out')">📤 出庫</button>
-            </div>
-          </div>
-          <ul class="timeline">${tl}</ul>
-        </div>
-      </div>
-    </div>`;
-
-  if(imgs.length>1 && window.Sortable && document.getElementById('detailThumbs')){
-    new Sortable(document.getElementById('detailThumbs'), {
-      animation:200, delay:400, delayOnTouchOnly:true,
-      ghostClass:'sortable-ghost', dragClass:'sortable-drag',
-      onEnd:()=>{
-        const grid=document.getElementById('detailThumbs');
-        const order=[...grid.querySelectorAll('img')].map(n=>n.src);
-        const arr=item.images;
-        arr.sort((a,b)=> order.indexOf(a.dataUrl)-order.indexOf(b.dataUrl));
-        saveState(); renderDetail();
-      }
-    });
-  }
-}
-
-function deleteDetailHistoryRecord(itemId, recId){
-  const item = getItem(itemId);
-  if(!item || !item.stockRecords) return;
-  const idx = item.stockRecords.findIndex(r=>(r.id||'' )===recId || String(item.stockRecords.indexOf(r))===String(recId));
-  if(idx>=0){
-    item.stockRecords.splice(idx,1);
-    saveState();
-    renderDetail();
-    toast('已刪除該筆流水記錄');
-  }
-}
-
-function setMainView(idx){
-  const item=getItem(currentItemId); if(!item) return;
-  const imgs=item.images||[];
-  imgs.forEach((im,i)=>im.isMain = (i===idx));
-  saveState(); renderDetail();
-}
-function moveDetailImg(idx, dir){
-  const item=getItem(currentItemId); if(!item) return;
-  const imgs=item.images||[], j=idx+dir;
-  if(idx<0||j<0||j>=imgs.length) return;
-  [imgs[idx],imgs[j]]=[imgs[j],imgs[idx]];
-  saveState(); renderDetail();
-}
-function openItemLink(id){
-  const item=getItem(id); if(!item) return;
-  if(item.buyLink){ window.open(item.buyLink, '_blank', 'noopener'); }
-  else toast('此物品沒有商品連結');
-}
-function deleteItem(id){
-  if(!confirm('確定刪除此物品？此操作無法復原')) return;
-  const item = getItem(id);
-  const catId = item ? item.categoryId : currentCatId;
-  state.items = state.items.filter(i=>i.id!==id);
-  saveState();
-  if(currentItemId===id) {
-    navigate('#/cat/' + catId);
-  } else {
-    renderDetail();
-  }
-}
-function duplicateItem(id){
-  const original = getItem(id);
-  if(!original) return;
-  const copy = JSON.parse(JSON.stringify(original));
-  copy.id = uid();
-  copy.name = original.name ? original.name + '（複製）' : '';
-  copy.createdAt = Date.now();
-  copy.stockRecords = [];
-  copy.initialQty = 0;
-  delete copy.customOrder;
-  state.items.push(copy);
-  saveState();
-  toast('✅ 已複製為新物品，可直接編輯後儲存');
-  navigate('#/item/' + copy.id);
-}
-
-/* ---------- 物品表單與毛線倉庫風格之直觀出入庫控制系統 ---------- */
-let editingItemId = null;
-function openItemForm(id, catId){
-  editingItemId = id;
-  const item = id ? getItem(id) : null;
-  const selCatId = item ? item.categoryId : catId;
-  const cat = getCat(selCatId);
-  pendingImages = item ? (item.images||[]).map(im=>({dataUrl:im.dataUrl, isMain:!!im.isMain})) : [];
-  
-  // 初始化毛線倉庫風格出入庫系統狀態
-  formStockMode = 'in';
-  formStockDelta = 1;
-  formStockDate = new Date().toISOString().slice(0,10);
-  formStockNote = '';
-  formEditingHistory = item && item.stockRecords ? JSON.parse(JSON.stringify(item.stockRecords)).map((h,idx)=>({...h, id:h.id||('hist_'+idx), delta:num(h.qty)*(h.type==='out'?-1:1)})) : [];
-
-  showModal('modalItem', itemFormHTML(item, cat));
-  initItemForm();
-}
-
-function cfInputHTML(f, val){
-  val = (val===undefined||val===null)? '' : val;
-  switch(f.type){
-    case 'number':
-      return `<input type="number" step="any" data-cf="${esc(f.id)}" value="${esc(val)}" placeholder="請輸入${esc(f.name)}">`;
-    case 'select': {
-      const opts=(f.options||[]).map(o=>`<option value="${esc(o)}" ${val===o?'selected':''}>${esc(o)}</option>`).join('');
-      return `<select data-cf="${esc(f.id)}"><option value="">請選擇…</option>${opts}</select>`;
-    }
-    case 'date':
-      return `<input type="date" data-cf="${esc(f.id)}" value="${esc(val)}">`;
-    case 'link':
-      return `<input type="url" data-cf="${esc(f.id)}" value="${esc(val)}" placeholder="https://…">`;
-    case 'image':
-      return `<div class="cf-img"><input type="url" data-cf="${esc(f.id)}" value="${esc(val)}" placeholder="https://圖片網址…" oninput="this.nextElementSibling.src=this.value;this.nextElementSibling.style.display=this.value?'block':'none'">${val?`<img src="${esc(val)}" onerror="this.style.display='none'">`:''}</div>`;
-    default:
-      return `<input data-cf="${esc(f.id)}" value="${esc(val)}" placeholder="請輸入${esc(f.name)}">`;
-  }
-}
-
-function itemFormHTML(item, cat){
-  const isNew = !item;
-  const catOpts = state.categories.map(c=>`<option value="${c.id}" ${c.id===(cat?cat.id:'')?'selected':''}>${c.icon} ${esc(c.name)}</option>`).join('');
-  const platformOpts = PLATFORMS.map(p=>`<option ${item&&item.platform===p?'selected':''}>${p}</option>`).join('');
-  const customHTML = cat ? cat.customFields.map(f=>{
-    const val = item&&item.custom? item.custom[f.id] : '';
-    const reqMark = f.isExpiry?'<span style="color:var(--danger)">（到期）</span>':'';
-    return `<div class="form-row"><label>${esc(f.name)} ${reqMark}</label>${cfInputHTML(f, val)}</div>`;
-  }).join('') : '';
-
-  return `
-    <h3>${isNew?'新增物品':'編輯物品'}${cat?` · ${cat.icon} ${esc(cat.name)}`:''}</h3>
-    <div class="form-grid item-form-grid">
-      <div class="form-row full"><label>圖片（可多張，長按拖拽排序，點「主圖」設為主圖）</label>
-        <div class="img-upload" id="imgList"></div>
-        <input type="file" id="f_imgs" accept="image/*" multiple style="display:none" onchange="onImgFiles(this)">
-      </div>
-      <div class="form-section full">通用欄位</div>
-      <div class="form-row"><label>名稱</label><input id="f_name" value="${esc(item?item.name:'')}" placeholder="可留空，以品類關鍵欄位顯示"></div>
-      ${isNew?`<div class="form-row"><label>品類</label><select id="f_cat" onchange="onFormCatChange(this.value)">${catOpts}</select></div>`:''}
-      <div class="form-row"><label>數量 / 庫存</label><input id="f_qty" type="number" min="0" value="${item?qtyOf(item):1}" oninput="updateFormStockPreview()" placeholder="1"></div>
-
-      ${customHTML?`<div class="form-section full">${cat.name} 專屬欄位</div>${customHTML}`:''}
-
-      <div class="form-section full">購買資訊</div>
-      <div class="form-row"><label>購買時間</label><input id="f_btime" type="date" value="${item&&item.buyTime?fmtDate(item.buyTime):''}"></div>
-      <div class="form-row"><label>購買平台</label><select id="f_platform">${platformOpts}</select></div>
-      <div class="form-row"><label>店鋪名稱</label><input id="f_store" value="${esc(item?item.store:'')}" placeholder="例如：蝦皮 · 毛線小舖"></div>
-      <div class="form-row"><label>商品連結</label><input id="f_link" value="${esc(item?item.buyLink:'')}" placeholder="https://…"></div>
-      <div class="form-row"><label>購買單價</label><input id="f_price" type="number" min="0" step="0.01" value="${item&&item.price!=null?item.price:''}" placeholder="0"></div>
-      <div class="form-row"><label>實付總價</label><input id="f_total" type="number" min="0" step="0.01" value="${item&&item.totalPrice!=null?item.totalPrice:''}" placeholder="0"></div>
-      <div class="form-row full"><label>備註</label><textarea id="f_note" placeholder="紀錄小故事、使用心得…">${esc(item?item.note:'')}</textarea></div>
-    </div>
-
-    <!-- 毛線倉庫風格：直觀出入庫與歷史流水面板 -->
-    <div class="form-section full">出入庫管理與歷史流水</div>
-    <div id="formStockPanelContainer"></div>
-
-    <div class="btn-row">
-      <button class="btn ghost" onclick="closeModal('modalItem')">取消</button>
-      <button class="btn primary" onclick="saveItemForm()">💾 儲存</button>
-    </div>`;
-}
-
-function onFormCatChange(catId){
-  const item = editingItemId?getItem(editingItemId):null;
-  showModal('modalItem', itemFormHTML(item, getCat(catId)));
-  initItemForm();
-}
-function initItemForm(){
-  renderImgList();
-  renderFormStockPanel();
-}
-
-function setFormStockMode(mode){
-  formStockMode = mode;
-  renderFormStockPanel();
-}
-
-function adjustFormStockDelta(delta){
-  formStockDelta = Math.max(1, formStockDelta + delta);
-  const inp = document.getElementById('formStockDeltaInp');
-  if(inp) inp.value = formStockDelta;
-  updateFormStockPreview();
-}
-
-function updateFormStockPreview(){
-  const qtyInp = document.getElementById('f_qty');
-  const currentQty = qtyInp ? num(qtyInp.value) : 0;
-  const delta = formStockDelta;
-  const after = formStockMode === 'out' ? Math.max(0, currentQty - delta) : currentQty + delta;
-  const prevEl = document.getElementById('formStockPreviewText');
-  if(prevEl) prevEl.textContent = `庫存 (${currentQty} → ${after})`;
-}
-
-function handleFormStockTransaction(){
-  const delta = num(formStockDelta);
-  if(delta <= 0) return;
-  const isOut = formStockMode === 'out';
-  const qtyInp = document.getElementById('f_qty');
-  const currentQty = qtyInp ? num(qtyInp.value) : 0;
-  const newQty = isOut ? Math.max(0, currentQty - delta) : currentQty + delta;
-  const actualDelta = newQty - currentQty;
-  
-  if(qtyInp) {
-    qtyInp.value = newQty;
-  }
-  
-  const timeInput = document.getElementById('formStockDateInp');
-  const noteInput = document.getElementById('formStockNoteInp');
-  const timeVal = timeInput && timeInput.value ? new Date(timeInput.value+'T00:00:00').getTime() : Date.now();
-  const noteVal = noteInput ? noteInput.value.trim() : '';
-
-  formEditingHistory.unshift({
-    id: 'hist_' + Date.now() + '_' + Math.random().toString(36).substring(2,6),
-    type: isOut ? 'out' : 'in',
-    qty: Math.abs(actualDelta),
-    action: isOut ? `出庫 (${Math.abs(actualDelta)})` : `入庫 (+${Math.abs(actualDelta)})`,
-    note: noteVal,
-    time: timeVal,
-    delta: isOut ? -Math.abs(actualDelta) : Math.abs(actualDelta)
-  });
-  
-  formStockNote = '';
-  formStockDelta = 1;
-  if(noteInput) noteInput.value = '';
-  renderFormStockPanel();
-  updateFormStockPreview();
-  toast(isOut ? '已記錄出庫' : '已記錄入庫');
-}
-
-function deleteFormHistoryRecord(histId){
-  const rec = formEditingHistory.find(h=>h.id===histId);
-  if(rec && rec.delta){
-    const qtyInp = document.getElementById('f_qty');
-    if(qtyInp){
-      const cur = num(qtyInp.value);
-      qtyInp.value = Math.max(0, cur - rec.delta);
-    }
-  }
-  formEditingHistory = formEditingHistory.filter(h=>h.id!==histId);
-  renderFormStockPanel();
-  updateFormStockPreview();
-}
-
-function renderFormStockPanel(){
-  const container = document.getElementById('formStockPanelContainer');
-  if(!container) return;
-  const qtyInp = document.getElementById('f_qty');
-  const currentQty = qtyInp ? num(qtyInp.value) : 0;
-  const after = formStockMode === 'out' ? Math.max(0, currentQty - formStockDelta) : currentQty + formStockDelta;
-
-  container.innerHTML = `
-    <div style="background:var(--card2); border-radius:20px; border:1.5px solid var(--line); overflow:hidden;">
-      <div style="display:flex; background:var(--bg2);">
-        <button type="button" onclick="setFormStockMode('in')" style="flex:1; padding:10px; font-size:13px; font-weight:700; background:${formStockMode==='in'?'var(--card)':'transparent'}; color:${formStockMode==='in'?'var(--primary-deep)':'var(--text-light)'}; border-bottom:${formStockMode==='in'?'3px solid var(--primary)':''};">入庫</button>
-        <button type="button" onclick="setFormStockMode('out')" style="flex:1; padding:10px; font-size:13px; font-weight:700; background:${formStockMode==='out'?'var(--card)':'transparent'}; color:${formStockMode==='out'?'var(--primary-deep)':'var(--text-light)'}; border-bottom:${formStockMode==='out'?'3px solid var(--primary)':''};">出庫</button>
-      </div>
-      <div style="padding:16px; display:flex; flex-direction:column; gap:12px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; background:#fff; padding:10px 14px; border-radius:14px; border:1px solid var(--line);">
-          <span id="formStockPreviewText" style="font-size:13px; font-weight:600; color:var(--text-light);">庫存 (${currentQty} → ${after})</span>
-          <div style="display:flex; align-items:center; gap:6px; background:var(--bg2); padding:2px; border-radius:12px;">
-            <button type="button" onclick="adjustFormStockDelta(-1)" style="width:28px; height:28px; background:#fff; border-radius:9px; font-size:16px; font-weight:700; color:var(--primary-deep); display:flex; align-items:center; justify-content:center;">-</button>
-            <input id="formStockDeltaInp" type="number" min="1" value="${formStockDelta}" oninput="formStockDelta=num(this.value)||1;updateFormStockPreview();" style="width:36px; text-align:center; border:none; background:transparent; font-size:14px; font-weight:700; outline:none;">
-            <button type="button" onclick="adjustFormStockDelta(1)" style="width:28px; height:28px; background:#fff; border-radius:9px; font-size:14px; font-weight:700; color:var(--primary-deep); display:flex; align-items:center; justify-content:center;">+</button>
-          </div>
-        </div>
-        <div style="display:flex; justify-content:space-between; align-items:center; background:#fff; padding:10px 14px; border-radius:14px; border:1px solid var(--line);">
-          <span style="font-size:13px; font-weight:600; color:var(--text-light);">日期</span>
-          <input id="formStockDateInp" type="date" value="${formStockDate}" style="background:transparent; border:none; font-size:13px; font-weight:600; color:var(--text); text-align:right; outline:none;">
-        </div>
-        <textarea id="formStockNoteInp" placeholder="說明請寫這裡～" style="width:100%; background:#fff; padding:10px 14px; border-radius:14px; border:1px solid var(--line); font-size:13px; outline:none; resize:none; height:60px;">${esc(formStockNote)}</textarea>
-        <div style="display:flex; justify-content:center;">
-          <button type="button" onclick="handleFormStockTransaction()" class="btn primary sm" style="padding:8px 24px;">確認紀錄</button>
-        </div>
-        ${formEditingHistory.length > 0 ? `
-          <div style="margin-top:8px; border-top:1px solid var(--line); padding-top:10px; max-height:140px; overflow-y:auto; display:flex; flex-direction:column; gap:6px;">
-            ${formEditingHistory.map(item=>`
-              <div style="display:flex; justify-content:space-between; align-items:center; background:#fff; padding:8px 12px; border-radius:12px; border:1px solid var(--line); gap:8px;">
-                <div style="min-width:0; flex:1;">
-                  <div style="display:flex; align-items:center; gap:6px; margin-bottom:2px;">
-                    <span style="font-size:10px; font-weight:700; padding:1px 6px; border-radius:10px; background:${item.type==='in'?'var(--success-bg)':'var(--danger-bg)'}; color:${item.type==='in'?'var(--success)':'var(--danger)'};">${item.action}</span>
-                    <span style="font-size:10px; color:var(--text-light);">${fmtTime(item.time)}</span>
-                  </div>
-                  ${item.note?`<p style="font-size:11px; color:var(--text); margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(item.note)}</p>`:''}
+            return (
+                <div className="space-y-1.5 relative">
+                    <label className="text-xs font-bold text-amber-900/70">
+                        {label} {required && <span className="text-rose-400">*</span>}
+                    </label>
+                    <div className="relative">
+                        <input
+                            ref={inputRef}
+                            type="text"
+                            name={name}
+                            value={value || ''}
+                            onChange={(e) => { onChange(e); setIsOpen(true); }}
+                            onFocus={() => setIsOpen(true)}
+                            onBlur={() => setTimeout(() => setIsOpen(false), 200)}
+                            placeholder={placeholder}
+                            required={required}
+                            className="w-full px-4 py-3 rounded-2xl bg-amber-50/50 border border-amber-100 focus:ring-2 focus:ring-amber-300 outline-none text-sm text-amber-900 font-medium transition-all"
+                        />
+                    </div>
+                    {isOpen && filteredOptions.length > 0 && (
+                        <div className="absolute z-50 w-full mt-1 bg-white border border-amber-100 rounded-2xl shadow-lg max-h-48 overflow-y-auto py-1 hide-scrollbar">
+                            {filteredOptions.map(opt => (
+                                <div
+                                    key={opt}
+                                    onMouseDown={(e) => {
+                                        e.preventDefault();
+                                        onChange({ target: { name, value: opt } });
+                                        setIsOpen(false);
+                                        inputRef.current?.blur();
+                                    }}
+                                    className="px-4 py-2 text-sm text-amber-900 hover:bg-amber-50 cursor-pointer transition-colors font-bold"
+                                >
+                                    {opt}
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
-                <button type="button" onclick="deleteFormHistoryRecord('${item.id}')" class="btn danger sm" style="padding:2px 8px; font-size:10px;">刪除</button>
-              </div>
-            `).join('')}
-          </div>
-        ` : ''}
-      </div>
-    </div>
-  `;
-}
+            );
+        }
 
-function renderImgList(){
-  const box=document.getElementById('imgList'); if(!box) return;
-  box.innerHTML = pendingImages.map((im,i)=>`
-    <div class="img-item">
-      <img class="img-thumb" src="${im.dataUrl}">
-      <div class="img-arrows"><button onclick="movePendingImg(${i},-1)">↑</button><button onclick="movePendingImg(${i},1)">↓</button></div>
-      ${im.isMain?`<span class="main-tag">主圖</span>`:`<span class="setmain" onclick="setPendingMain(${i})">設主圖</span>`}
-      <span class="rm" onclick="removePendingImg(${i})">✕</span>
-    </div>`).join('') + `<div class="img-up-box" onclick="document.getElementById('f_imgs').click()" title="新增圖片">＋</div>`;
-  if(pendingImages.length>1 && window.Sortable){
-    new Sortable(box, { animation:200, delay:400, delayOnTouchOnly:true, ghostClass:'sortable-ghost', dragClass:'sortable-drag', filter:'.img-up-box',
-      onEnd:()=>{ const order=[...box.querySelectorAll('.img-item img')].map(n=>n.src); pendingImages.sort((a,b)=>order.indexOf(a.dataUrl)-order.indexOf(b.dataUrl)); } });
-  }
-}
-function setPendingMain(i){ pendingImages.forEach((im,k)=>im.isMain=(k===i)); renderImgList(); }
-function movePendingImg(i, dir){
-  const j=i+dir;
-  if(i<0||j<0||j>=pendingImages.length) return;
-  [pendingImages[i],pendingImages[j]]=[pendingImages[j],pendingImages[i]];
-  renderImgList();
-}
-function removePendingImg(i){ pendingImages.splice(i,1); renderImgList(); }
-function onImgFiles(input){
-  const files=[...input.files];
-  if(!files.length) return;
-  let done=0;
-  files.forEach(f=>{
-    if(f.size > 8*1024*1024){ toast('圖片過大，已略過'); done++; if(done===files.length) input.value=''; return; }
-    const reader=new FileReader();
-    reader.onload=e=>{
-      const img=new Image();
-      img.onload=()=>{
-        const max=900; let w=img.width,h=img.height;
-        if(w>max||h>max){ const s=max/Math.max(w,h); w=Math.round(w*s); h=Math.round(h*s); }
-        const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
-        cv.getContext('2d').drawImage(img,0,0,w,h);
-        pendingImages.push({dataUrl:cv.toDataURL('image/jpeg',0.7), isMain:pendingImages.length===0});
-        renderImgList(); done++; if(done===files.length) input.value='';
-      };
-      img.src=e.target.result;
-    };
-    reader.readAsDataURL(f);
-  });
-}
+        function App() {
+            const [yarns, setYarns] = useState([]);
+            const [loading, setLoading] = useState(true);
+            const [searchTerm, setSearchTerm] = useState('');
+            const [activeFilter, setActiveFilter] = useState('全部');
+            
+            const [isFormOpen, setIsFormOpen] = useState(false);
+            const [editingId, setEditingId] = useState(null);
+            const [currentImageBase64, setCurrentImageBase64] = useState('');
+            const [currentEditingHistory, setEditingHistory] = useState([]);
+            
+            const [stockModalMode, setStockModalMode] = useState('in');
+            const [stockDelta, setStockDelta] = useState(1);
+            const [stockDate, setStockDate] = useState(toDateLocal(Date.now()));
+            const [stockNote, setStockNote] = useState('');
 
-function saveItemForm(){
-  const name=document.getElementById('f_name').value.trim();
-  const catId = document.getElementById('f_cat') ? document.getElementById('f_cat').value : (getItem(editingItemId)?.categoryId);
-  const custom={};
-  document.querySelectorAll('#modalItem [data-cf]').forEach(inp=>{ custom[inp.dataset.cf]=inp.value; });
-  const _origUnit = editingItemId ? (getItem(editingItemId)?.unit || '') : '';
-  const finalQty = num(document.getElementById('f_qty').value);
-  
-  const stockRecordsToSave = formEditingHistory.map(h=>({
-    id: h.id,
-    type: h.type,
-    qty: h.qty,
-    time: h.time,
-    note: h.note
-  }));
+            const [formData, setFormData] = useState({
+                brand: '', color: '', category: '', material: '', quantity: 1, price: 0, createdAtInput: toDateLocal(Date.now())
+            });
 
-  const data={
-    name,
-    categoryId: catId,
-    unit: _origUnit || (getCat(catId)||{}).defaultUnit || '',
-    initialQty: finalQty,
-    images: pendingImages,
-    buyTime: document.getElementById('f_btime').value ? new Date(document.getElementById('f_btime').value+'T00:00:00').getTime() : '',
-    platform: document.getElementById('f_platform').value,
-    store: document.getElementById('f_store').value.trim(),
-    buyLink: document.getElementById('f_link').value.trim(),
-    price: document.getElementById('f_price').value,
-    totalPrice: document.getElementById('f_total').value,
-    note: document.getElementById('f_note').value.trim(),
-    custom,
-    stockRecords: stockRecordsToSave
-  };
+            const imageInputRef = useRef(null);
 
-  if(editingItemId){
-    const it=getItem(editingItemId);
-    const keep={id:it.id, createdAt:it.createdAt, customOrder:it.customOrder};
-    state.items = state.items.map(i=>i.id===editingItemId? Object.assign({},data,keep) : i);
-    toast('✅ 已儲存');
-  } else {
-    data.id=uid(); data.createdAt=Date.now();
-    if(!data.images.length && !data.initialQty){ data.initialQty=1; }
-    state.items.push(data);
-    toast('✅ 已新增');
-  }
-  closeModal('modalItem');
-  saveState();
-  router();
-}
+            // ==========================================
+            // 修復加入主畫面 (PWA) 的認證與資料讀取流程
+            // ==========================================
+            useEffect(() => {
+                let unsubscribeDb = null;
+                let unsubscribeAuth = null;
 
-/* ---------- 獨立出入庫快捷彈窗（詳情頁點擊入庫／出庫按鈕） ---------- */
-let stockType='in';
-function openStockForm(type){
-  stockType=type;
-  const item=getItem(currentItemId);
-  if(!item) return;
-  const q=qtyOf(item);
-  const defaultQty = 1;
-  const previewAfter = type==='in' ? q+defaultQty : Math.max(0,q-defaultQty);
-  const today = new Date().toISOString().slice(0,10);
-  const notePh = type==='in'?'例如：補貨、新購入':'例如：使用、消耗、贈送';
-  showModal('modalStock', `
-    <h3>${type==='in'?'📥 入庫':'📤 出庫'}</h3>
-    <div class="stock-tabs">
-      <button class="stock-tab ${type==='in'?'active':''}" onclick="setStockType('in')">入庫</button>
-      <button class="stock-tab ${type==='out'?'active':''}" onclick="setStockType('out')">出庫</button>
-    </div>
-    <div class="stock-tab-content">
-      <div class="stock-qty-row">
-        <span class="stock-preview">庫存 (<b>${q}</b> → <b id="stockPreviewAfter">${previewAfter}</b>)</span>
-        <div class="qty-adjuster">
-          <button class="qty-btn" onclick="adjustStockQty(-1)">−</button>
-          <input id="s_qty" type="number" min="1" value="${defaultQty}" oninput="updateStockPreview()">
-          <button class="qty-btn" onclick="adjustStockQty(1)">＋</button>
-        </div>
-      </div>
-      <div class="form-row"><label>${type==='in'?'入庫時間':'出庫時間'}</label><input id="s_time" type="date" value="${today}"></div>
-      <div class="form-row"><label>用途／備註</label><input id="s_note" placeholder="${notePh}"></div>
-    </div>
-    <button class="stock-save-btn" onclick="saveStock()">確認紀錄</button>`);
-}
-function setStockType(t){ stockType=t; openStockForm(t); }
-function adjustStockQty(delta){
-  const inp=document.getElementById('s_qty'); if(!inp) return;
-  const cur=num(inp.value)||1;
-  inp.value=Math.max(1,cur+delta);
-  updateStockPreview();
-}
-function updateStockPreview(){
-  const item=getItem(currentItemId); if(!item) return;
-  const q=qtyOf(item);
-  const qty=num(document.getElementById('s_qty').value)||1;
-  const after = stockType==='in' ? q+qty : Math.max(0,q-qty);
-  const el=document.getElementById('stockPreviewAfter');
-  if(el) el.textContent=after;
-}
-function saveStock(){
-  const item=getItem(currentItemId); if(!item) return;
-  const qty=num(document.getElementById('s_qty').value);
-  if(qty<=0){ toast('請輸入有效數量'); return; }
-  const note=document.getElementById('s_note').value.trim();
-  const tInput=document.getElementById('s_time').value;
-  const time=tInput? new Date(tInput+'T00:00:00').getTime() : Date.now();
-  const type=stockType;
-  if(type==='out' && qtyOf(item)-qty < 0){
-    if(!confirm(`出庫 ${qty} 將使庫存變為負數（目前 ${qtyOf(item)}），仍要繼續？`)) return;
-  }
-  const rec={ id:uid(), type, qty, time, note };
-  item.stockRecords = item.stockRecords||[]; item.stockRecords.push(rec);
-  closeModal('modalStock');
-  saveState();
-  renderDetail();
-  toast(type==='in'?'✅ 已入庫':'✅ 已出庫');
-}
+                if (isFirebaseActive && auth) {
+                    unsubscribeAuth = auth.onAuthStateChanged(user => {
+                        if (user) {
+                            // 已經有匿名身分了，開始監聽資料
+                            unsubscribeDb = db.collection('yarns').onSnapshot((snapshot) => {
+                                const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                                data.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+                                setYarns(data);
+                                setLoading(false);
+                            }, (error) => {
+                                console.error("資料讀取失敗:", error);
+                                fallbackLocalStorage();
+                            });
+                        } else {
+                            // 如果加入主畫面變成新的空白狀態，強制重新匿名登入
+                            auth.signInAnonymously().catch(err => {
+                                console.warn("匿名登入失敗", err);
+                                fallbackLocalStorage();
+                            });
+                        }
+                    });
+                } else {
+                    fallbackLocalStorage();
+                }
 
-/* ---------- 品類管理 ---------- */
-function renderManage(){
-  const el=document.getElementById('view-manage');
-  const editMode = sortModes['manage']===true;
-  const cards = [...state.categories].map(c=>{
-    return `<div class="row-item cat-mng" data-id="${c.id}">
-      <span class="sort-handle" title="拖拽排序">⋮⋮</span>
-      <div class="thumb" style="background:${c.color}22;display:flex;align-items:center;justify-content:center;font-size:26px">${c.icon}</div>
-      <div class="info"><b>${esc(c.name)}</b></div>
-      ${editMode?`<div class="mng-arrows"><button class="btn soft sm" onclick="moveCat('${c.id}',-1)" title="上移">↑</button><button class="btn soft sm" onclick="moveCat('${c.id}',1)" title="下移">↓</button></div>`:''}
-      <button class="btn soft sm" onclick="openCatForm('${c.id}')">✏️</button>
-      <button class="btn danger sm" onclick="deleteCat('${c.id}')">🗑</button>
-    </div>`;
-  }).join('') || '<div style="color:var(--text-light);text-align:center;padding:30px">還沒有品類</div>';
+                return () => {
+                    if (unsubscribeDb) unsubscribeDb();
+                    if (unsubscribeAuth) unsubscribeAuth();
+                };
+            }, []);
 
-  el.innerHTML = `
-    <div class="sec-title"><h2>🗂️ 品類管理</h2>
-      <div style="display:flex;gap:8px;align-items:center;">
-        <button class="btn ${editMode?'primary':'ghost'} sm" onclick="toggleManageSort()">${editMode?'✓ 完成排序':'✋ 編輯排序模式'}</button>
-        <button class="btn primary sm" onclick="openCatForm(null)">＋ 新增品類</button>
-      </div>
-    </div>
-    ${editMode?`<div class="sort-hint" style="margin-bottom:14px">🖐 已開啟編輯排序模式：長按卡片拖拽調整順序，常用品類拖到最上方，鬆開自動儲存並同步。</div>`:''}
-    <div class="row-list" id="catMngList">${cards}</div>`;
+            function fallbackLocalStorage() {
+                try {
+                    const localData = JSON.parse(localStorage.getItem('yarn_warehouse_data') || '[]');
+                    setYarns(localData);
+                } catch(e) { setYarns([]); }
+                setLoading(false);
+            }
 
-  if(window.Sortable && document.getElementById('catMngList')){
-    new Sortable(document.getElementById('catMngList'), {
-      animation:200, delay:600, delayOnTouchOnly:true,
-      handle:'.sort-handle', disabled:!editMode,
-      ghostClass:'sortable-ghost', dragClass:'sortable-drag',
-      onEnd:()=>{
-        const list=document.getElementById('catMngList');
-        const order=[...list.querySelectorAll('.cat-mng')].map(n=>n.dataset.id);
-        state.categories.sort((a,b)=>order.indexOf(a.id)-order.indexOf(b.id));
-        state.categories.forEach((c,i)=>c.order=i);
-        saveState(); toast('✅ 排序已儲存並同步');
-      }
-    });
-  }
-}
-function toggleManageSort(){ sortModes['manage'] = sortModes['manage']!==true; renderManage(); }
-function moveCat(id, dir){
-  const i=state.categories.findIndex(c=>c.id===id), j=i+dir;
-  if(i<0||j<0||j>=state.categories.length) return;
-  [state.categories[i],state.categories[j]]=[state.categories[j],state.categories[i]];
-  state.categories.forEach((c,k)=>c.order=k);
-  saveState(); renderManage(); toast('✅ 順序已調整並同步');
-}
+            function saveToStorage(newYarns) {
+                setYarns(newYarns);
+                try { localStorage.setItem('yarn_warehouse_data', JSON.stringify(newYarns)); } catch(e) {}
+            }
 
-let editingCatId=null;
-let draftCf=[];
-function renderCfEditor(){
-  const box=document.getElementById('cfEditor'); if(!box) return;
-  box.innerHTML = draftCf.map((f,i)=>`
-    <div class="cf-row">
-      <div class="cf-head">
-        <span class="sort-handle" title="拖拽排序">⋮⋮</span>
-        <input class="cf-name" value="${esc(f.name)}" oninput="draftCf[${i}].name=this.value" placeholder="欄位名稱">
-        <select class="cf-type" onchange="draftCfType(${i},this.value)">${FIELD_TYPES.map(t=>`<option value="${t.v}" ${f.type===t.v?'selected':''}>${t.n}</option>`).join('')}</select>
-        <button class="cf-mini" onclick="draftCfUp(${i})" title="上移">↑</button>
-        <button class="cf-mini" onclick="draftCfDown(${i})" title="下移">↓</button>
-        <button class="cf-mini danger" onclick="draftCfDel(${i})" title="刪除欄位">✕</button>
-      </div>
-      ${f.type==='select'?`<div class="cf-sub">選項（用逗號分隔）<input type="text" value="${esc((f.options||[]).join(','))}" oninput="draftCf[${i}].options=this.value.split(/[,，]/).map(s=>s.trim()).filter(Boolean)"></div>`:''}
-      ${f.type==='date'?`<div class="cf-sub"><label><input type="checkbox" ${f.isExpiry?'checked':''} onchange="draftCf[${i}].isExpiry=this.checked">此欄位為「到期日」→ 用於到期專區提醒</label></div>`:''}
-    </div>`).join('') || '<div style="color:var(--text-light);text-align:center;padding:14px">尚未新增欄位</div>';
-  const tfSel=document.getElementById('c_titleField');
-  if(tfSel){
-    const selVal=tfSel.dataset.val;
-    tfSel.innerHTML = `<option value="">（不指定）</option>` + draftCf.map((f,i)=>`<option value="${esc(f.id)}" ${f.id===selVal?'selected':''}>${esc(f.name||'未命名')}</option>`).join('');
-  }
-}
-function draftCfAdd(){
-  draftCf.push({id:uid(), name:'', type:'text', options:[], isExpiry:false});
-  renderCfEditor();
-}
-function draftCfDel(i){ draftCf.splice(i,1); renderCfEditor(); }
-function draftCfUp(i){ if(i<=0) return; [draftCf[i-1],draftCf[i]]=[draftCf[i],draftCf[i-1]]; renderCfEditor(); }
-function draftCfDown(i){ if(i>=draftCf.length-1) return; [draftCf[i],draftCf[i+1]]=[draftCf[i+1],draftCf[i]]; renderCfEditor(); }
-function draftCfType(i,v){
-  draftCf[i].type=v;
-  if(v!=='select') draftCf[i].options= draftCf[i].options||[];
-  if(v!=='date') draftCf[i].isExpiry=false;
-  renderCfEditor();
-}
-function openCatForm(id){
-  editingCatId=id;
-  const c=id?getCat(id):null;
-  draftCf = c ? (c.customFields||[]).map(f=>({id:f.id, name:f.name, type:f.type, options:(f.options||[]).slice(), isExpiry:!!f.isExpiry})) : [];
-  showModal('modalCat', `
-    <h3>${id?'編輯品類':'新增品類'}</h3>
-    <div class="form-row"><label>品類名稱 <span class="req">*</span></label><input id="c_name" value="${esc(c?c.name:'')}" placeholder="例如：串珠"></div>
-    <div class="form-grid">
-      <div class="form-row"><label>圖示（Emoji）</label><input id="c_icon" value="${esc(c?c.icon:'📦')}" placeholder="🧶"></div>
-      <div class="form-row"><label>主色（HEX）</label><input id="c_color" value="${esc(c?c.color:'#F7B32B')}" placeholder="#F7B32B"></div>
-    </div>
-    <div class="form-grid">
-      <div class="form-row"><label>預設單位</label><input id="c_unit" value="${esc(c?c.defaultUnit:'')}" placeholder="團"></div>
-      <div class="form-row"><label>名稱留空時顯示的欄位</label><select id="c_titleField" data-val="${esc(c?c.titleField:'')}"></select></div>
-    </div>
-    <div class="form-row"><label style="display:flex;align-items:center;justify-content:space-between;width:100%">✏️ 自訂專屬欄位<span style="font-size:11.5px;color:var(--text-light)">型別：文字·數字·選擇·日期·圖片·連結</span></label>
-      <div class="cf-editor" id="cfEditor"></div>
-      <button class="cf-add" onclick="draftCfAdd()">＋ 新增欄位</button>
-    </div>
-    <div class="btn-row"><button class="btn ghost" onclick="closeModal('modalCat')">取消</button><button class="btn primary" onclick="saveCatForm()">💾 儲存</button></div>`);
-  renderCfEditor();
-}
-function saveCatForm(){
-  const name=document.getElementById('c_name').value.trim();
-  if(!name){ toast('請填寫品類名稱'); return; }
-  const customFields=draftCf.map((f,i)=>({id:f.id||uid(), name:String(f.name||'').trim()||('欄位'+(i+1)), type:f.type, options:(f.options||[]).slice(), isExpiry:!!f.isExpiry}));
-  let titleField=document.getElementById('c_titleField').value;
-  if(titleField && !customFields.some(f=>f.id===titleField)) titleField='';
-  if(!titleField) titleField = customFields[0]?customFields[0].id:'';
-  const data={ name, icon:document.getElementById('c_icon').value.trim()||'📦', color:document.getElementById('c_color').value.trim()||'#F7B32B',
-    defaultUnit:document.getElementById('c_unit').value.trim(), titleField, customFields };
-  if(editingCatId){
-    state.categories=state.categories.map(c=>c.id===editingCatId? Object.assign({},c,data):c);
-    toast('✅ 已儲存');
-  } else {
-    state.categories.push(Object.assign({id:uid()},data));
-    toast('✅ 已新增品類');
-  }
-  closeModal('modalCat'); saveState(); renderManage();
-}
-function deleteCat(id){
-  const count=state.items.filter(i=>i.categoryId===id).length;
-  if(count>0){ if(!confirm(`此品類內有 ${count} 件物品，刪除品類後這些物品也會被刪除，確定？`)) return; }
-  else { if(!confirm('確定刪除此品類？')) return; }
-  state.categories=state.categories.filter(c=>c.id!==id);
-  state.items=state.items.filter(i=>i.categoryId!==id);
-  saveState(); renderManage(); toast('已刪除');
-}
+            const filterTabs = useMemo(() => ['全部', ...Array.from(new Set(yarns.map(y => y.material?.trim()).filter(Boolean)))], [yarns]);
+            const existingBrands = useMemo(() => Array.from(new Set(yarns.map(y => y.brand?.trim()).filter(Boolean))), [yarns]);
+            const existingCategories = useMemo(() => Array.from(new Set(yarns.map(y => y.category?.trim()).filter(Boolean))), [yarns]);
+            const existingMaterials = useMemo(() => Array.from(new Set(yarns.map(y => y.material?.trim()).filter(Boolean))), [yarns]);
 
-function renderStats(){
-  const el=document.getElementById('view-stats');
-  const cats=state.categories;
-  const counts=cats.map(c=>state.items.filter(i=>i.categoryId===c.id).length);
-  const total=counts.reduce((a,b)=>a+b,0)||1;
-  const spend=cats.map(c=>state.items.filter(i=>i.categoryId===c.id).reduce((s,i)=>s+totalSpend(i),0));
-  const totalSpendSum=spend.reduce((a,b)=>a+b,0);
-  const expItems=state.items.map(getExpiryInfo).filter(Boolean);
-  const urgentExp=expItems.filter(e=>e.status!=='ok').length;
-  const recentRecs = state.items.flatMap(i=>(i.stockRecords||[]).map(r=>Object.assign({itemName:itemTitle(i),cat:i.categoryId},r)))
-    .sort((a,b)=>num(b.time)-num(a.time)).slice(0,8);
+            const filteredYarns = useMemo(() => yarns.filter(yarn => {
+                const matchSearch = (yarn.color || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
+                    (yarn.brand || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    (yarn.category || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    (yarn.material || '').toLowerCase().includes(searchTerm.toLowerCase());
+                const matchFilter = activeFilter === '全部' || yarn.material?.trim() === activeFilter;
+                return matchSearch && matchFilter;
+            }), [yarns, searchTerm, activeFilter]);
 
-  let segs=cats.map((c,i)=>({name:c.name,icon:c.icon,color:c.color,count:counts[i],spend:spend[i]}));
-  if(segs.length>4){ const rest=segs.slice(3); segs=segs.slice(0,3).concat([{name:'其他',icon:'📦',color:'#B9AE9B',count:rest.reduce((s,x)=>s+x.count,0),spend:rest.reduce((s,x)=>s+x.spend,0)}]); }
-  const donutCSS = `background:conic-gradient(${segs.map((s,i)=>{
-    const start=segs.slice(0,i).reduce((x,y)=>x+Math.round(y.count/total*100),0);
-    return `${s.color} ${start}% ${start+Math.round(s.count/total*100)}%`;
-  }).join(',')})`;
+            const stats = useMemo(() => yarns.reduce((acc, y) => ({
+                totalItems: acc.totalItems + Number(y.quantity || 0),
+                totalValue: acc.totalValue + (Number(y.quantity || 0) * Number(y.price || 0))
+            }), { totalItems: 0, totalValue: 0 }), [yarns]);
 
-  const legend = segs.map(s=>`<div class="li"><span class="sw" style="background:${s.color}"></span><b>${s.icon} ${esc(s.name)}</b><span style="margin-left:auto">${s.count} 件 · $${s.spend.toLocaleString()}</span></div>`).join('');
-  const barMax = Math.max(...counts,1);
-  const bars = cats.map((c,i)=>`<div class="bar-row"><span class="bl">${c.icon} ${esc(c.name)}</span><div class="bt"><div class="bf" style="width:${Math.round(counts[i]/barMax*100)}%;background:${c.color}"></div></div><b style="width:40px">${counts[i]}</b></div>`).join('');
+            const handleInputChange = (e) => setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
 
-  const recHTML = recentRecs.map(r=>{
-    return `<div class="row-item" style="cursor:default"><div class="thumb" style="display:flex;align-items:center;justify-content:center;font-size:20px;background:${r.type==='in'?'var(--success-bg)':'var(--danger-bg)'}">${r.type==='in'?'📥':'📤'}</div><div class="info"><b>${esc(r.itemName)}</b><span>${r.type==='in'?'入庫 +':'出庫 -'}${num(r.qty)} · ${fmtTime(r.time)}${r.note?' · '+esc(r.note):''}</span></div></div>`;
-  }).join('')||'<div style="color:var(--text-light);text-align:center;padding:24px">尚無出入庫記錄</div>';
+            // ==========================================
+            // 修復照片上傳歪一邊 (方向顛倒問題)
+            // ==========================================
+            const handleImageUpload = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        const MAX_SIZE = 800; // 提升一點畫質
+                        let width = img.width;
+                        let height = img.height;
 
-  el.innerHTML = `
-    <div class="stat-grid">
-      <div class="stat-card"><span class="em">📦</span><div class="v">${state.items.length}</div><div class="l">物品總數</div></div>
-      <div class="stat-card"><span class="em">💰</span><div class="v">$${totalSpendSum.toLocaleString()}</div><div class="l">總花費</div></div>
-      <div class="stat-card" style="cursor:pointer" onclick="navigate('#/expiry')"><span class="em">⏰</span><div class="v">${urgentExp}</div><div class="l">到期提醒</div></div>
-    </div>
-    <div class="stats-wrap">
-      <div class="card" style="padding:20px">
-        <h3 style="margin:0 0 16px;font-size:17px">🧮 各品類占比</h3>
-        <div class="donut-wrap">
-          <div class="donut" style="${donutCSS}" data-n="${total}"></div>
-          <div class="legend">${legend}</div>
-        </div>
-      </div>
-      <div class="card" style="padding:20px">
-        <h3 style="margin:0 0 16px;font-size:17px">📊 各品類數量</h3>
-        ${bars}
-      </div>
-    </div>
-    <div class="card" style="padding:20px;margin-top:18px">
-      <h3 style="margin:0 0 12px;font-size:17px">🕑 最近出入庫</h3>
-      <div class="row-list">${recHTML}</div>
-    </div>`;
-}
+                        // 取消強制裁切成正方形，改為等比例縮小，保留原圖方向與比例
+                        // 讓 CSS 的 object-cover 去處理正方形視覺，這樣就不會受到 EXIF 方向干擾
+                        if (width > height) {
+                            if (width > MAX_SIZE) {
+                                height = Math.round(height * (MAX_SIZE / width));
+                                width = MAX_SIZE;
+                            }
+                        } else {
+                            if (height > MAX_SIZE) {
+                                width = Math.round(width * (MAX_SIZE / height));
+                                height = MAX_SIZE;
+                            }
+                        }
+                        
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        setCurrentImageBase64(canvas.toDataURL('image/jpeg', 0.7));
+                    };
+                    img.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+                if (imageInputRef.current) imageInputRef.current.value = '';
+            };
 
-function renderExpiry(){
-  const el=document.getElementById('view-expiry');
-  const list=state.items.map(getExpiryInfo).filter(Boolean);
-  list.sort((a,b)=>a.date-b.date);
-  const expired=list.filter(e=>e.status==='expired');
-  const soon=list.filter(e=>e.status==='soon');
-  const ok=list.filter(e=>e.status==='ok');
-  const row=(e)=>{
-    const item=getItem(e.item.id); const c=getCat(item.categoryId);
-    const img=(item.images||[]).find(im=>im.isMain)||(item.images||[])[0];
-    const badge = e.status==='expired'?`<span class="exp-badge expired">已到期 ${Math.abs(e.diffDays)} 天</span>`
-      : e.status==='soon'?`<span class="exp-badge soon">剩 ${e.diffDays} 天</span>`
-      : `<span class="exp-badge ok">即期品</span>`;
-    return `<div class="row-item" style="cursor:pointer" onclick="openItem('${item.id}')">
-      <div class="thumb" style="display:flex;align-items:center;justify-content:center;font-size:22px;background:${c?c.color:'#eee'}22;overflow:hidden">${img?`<img src="${img.dataUrl}" style="width:100%;height:100%;object-fit:cover">`:c?c.icon:'📦'}</div>
-      <div class="info"><b>${esc(itemTitle(item))}</b><span>${c?esc(c.name):''} · ${fmtDate(e.date.getTime())} · ${badge}</span></div>
-    </div>`;
-  };
-  const grp=(t,arr)=>arr.length?`<div class="sec-title" style="margin-top:6px"><h2>${t}（${arr.length}）</h2></div><div class="row-list">${arr.map(row).join('')}</div>`:'';
-  el.innerHTML = `
-    <div class="sec-title"><h2>⏰ 即期品／到期專區</h2><span class="sub">只顯示有填到期日的物品</span></div>
-    <div class="exp-zone-hero">
-      <div class="big">🧴</div>
-      <div style="flex:1"><b style="font-size:16px">到期管理</b>
-        <div style="font-size:13px;color:var(--text-light);margin-top:2px">已到期 ${expired.length} 件 · 即將到期 ${soon.length} 件 · 即期品 ${ok.length} 件</div>
-      </div>
-    </div>
-    ${grp('⚠️ 已到期', expired)}
-    ${grp('🔥 即將到期', soon)}
-    ${grp('✅ 即期品', ok)}
-    ${list.length?'':'<div style="text-align:center;color:var(--text-light);padding:60px 0"><div style="font-size:44px;margin-bottom:10px">🧴</div>到期專區目前沒有物品</div>'}
-  `;
-}
+            const openAddForm = () => {
+                setEditingId(null);
+                setCurrentImageBase64('');
+                setEditingHistory([]);
+                setStockModalMode('in'); setStockDelta(1); setStockDate(toDateLocal(Date.now())); setStockNote('');
+                setFormData({ brand: '', color: '', category: '', material: '', quantity: 1, price: 0, createdAtInput: toDateLocal(Date.now()) });
+                setIsFormOpen(true);
+            };
 
-function renderSettings(){
-  const el=document.getElementById('view-settings');
-  const cfg=state.fbConfig;
-  const catOpts=state.categories.map(c=>`<option value="${c.id}">${c.icon} ${esc(c.name)}</option>`).join('');
-  const cl=(cfg&&cfg.apiKey)?'ok':'';
-  el.innerHTML = `
-    <div class="sec-title"><h2>⚙️ 設定</h2></div>
+            const openEditForm = (yarn) => {
+                setEditingId(yarn.id);
+                setCurrentImageBase64(yarn.imageUrl || '');
+                setEditingHistory((yarn.history || []).map((h, idx) => ({ ...h, id: h.id || `hist_${Date.now()}_${idx}`, delta: Number(h.delta) || 0 })));
+                setStockModalMode('in'); setStockDelta(1); setStockNote(''); setStockDate(toDateLocal(Date.now()));
+                setFormData({
+                    brand: yarn.brand || '', color: yarn.color || '', category: yarn.category || '',
+                    material: yarn.material || '', quantity: Number(yarn.quantity) || 0, price: Number(yarn.price) || 0,
+                    createdAtInput: toDateLocal(yarn.createdAt || Date.now())
+                });
+                setIsFormOpen(true);
+            };
 
-    <div class="set-card">
-      <h3>☁️ 雲端同步（Firebase）</h3>
-      <div class="desc">輸入魔法代碼即可快速連線；資料存於你的私有 Firebase，多端即時同步。</div>
-      <div class="form-row"><label>🔑 快速通關（魔法代碼）</label><input type="password" oninput="quickFillFB(this.value)" placeholder="輸入魔法代碼自動帶入..."></div>
-      <details style="margin:4px 0 12px">
-        <summary style="font-size:13px;color:var(--primary-deep);cursor:pointer;font-weight:600">手動輸入設定（進階）</summary>
-        <div class="form-grid" style="margin-top:12px">
-          <div class="form-row"><label>apiKey</label><input id="fb_apikey" value="${esc(cfg?cfg.apiKey:'')}" placeholder="AIza…"></div>
-          <div class="form-row"><label>authDomain</label><input id="fb_auth" value="${esc(cfg?cfg.authDomain:'')}" placeholder="xxx.firebaseapp.com"></div>
-          <div class="form-row"><label>projectId</label><input id="fb_project" value="${esc(cfg?cfg.projectId:'')}" placeholder="warm-storage-xxx"></div>
-          <div class="form-row"><label>storageBucket</label><input id="fb_bucket" value="${esc(cfg?cfg.storageBucket:'')}" placeholder="xxx.appspot.com"></div>
-          <div class="form-row"><label>messagingSenderId</label><input id="fb_sender" value="${esc(cfg?cfg.messagingSenderId:'')}"></div>
-          <div class="form-row"><label>appId</label><input id="fb_appid" value="${esc(cfg?cfg.appId:'')}" placeholder="1:xxx:web:xxx"></div>
-          <div class="form-row"><label>measurementId</label><input id="fb_measurement" value="${esc(cfg?cfg.measurementId:'')}" placeholder="G-..."></div>
-        </div>
-      </details>
-      <div class="fb-btn-row">
-        <button class="btn primary" onclick="saveFirebaseCfg()">💾 儲存並連線</button>
-        <button class="btn soft" onclick="syncNow()">🔄 立即同步</button>
-        <button class="btn danger" onclick="unbindFirebase()">解除綁定</button>
-      </div>
-      <div style="margin-top:14px" id="fbStatus" class="cloud-status ${cl}">${fb.ready?'✅ 已連線，資料即時同步中':(cfg?'⚠️ 尚未連線，請點「儲存並連線」':'🔌 尚未綁定（輸入魔法代碼 000800 快速連線）')}</div>
-    </div>
+            const duplicateCurrentYarn = () => {
+                setEditingId(null); 
+                setCurrentImageBase64('');
+                setEditingHistory([]);
+                setFormData(prev => ({
+                    ...prev,
+                    color: '', 
+                    quantity: 1,
+                    createdAtInput: toDateLocal(Date.now())
+                }));
+                setStockModalMode('in');
+                setStockDelta(1);
+                setStockNote('');
+            };
 
-    <div class="set-card">
-      <h3>📊 Excel 匯入／匯出</h3>
-      <div class="desc">提供標準模板。可匯出全部或單一品類。</div>
-      <div class="row">
-        <button class="btn soft" onclick="downloadTemplate()">📥 下載模板</button>
-        <button class="btn primary" onclick="document.getElementById('fileExcel').click()">📤 匯入 Excel</button>
-        <button class="btn soft" onclick="exportExcel('all')">💾 匯出全部</button>
-        <select id="expCatSel" style="padding:9px 12px;border-radius:24px;border:1.5px solid var(--line);background:var(--card)">
-          <option value="">（單一品類）</option>${catOpts}
-        </select>
-        <button class="btn soft" onclick="exportExcel('one')">💾 匯出此品類</button>
-      </div>
-    </div>
+            const saveYarn = async (e) => {
+                if (e) e.preventDefault();
+                try {
+                    const newQty = Math.max(0, Number(formData.quantity) || 0);
+                    const newPrice = Math.max(0, Number(formData.price) || 0);
+                    let createdAtVal = Date.now();
+                    if (formData.createdAtInput) {
+                        const parsed = new Date(formData.createdAtInput).getTime();
+                        if (!isNaN(parsed)) createdAtVal = parsed;
+                    }
+                    let history = [...currentEditingHistory];
+                    if (!editingId && history.length === 0) {
+                        history.unshift({
+                            id: `hist_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+                            action: `建立商品 (數量: ${newQty})`,
+                            time: formData.createdAtInput || toDateLocal(Date.now()),
+                            delta: newQty
+                        });
+                    }
+                    const docId = editingId || 'yarn_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
+                    const yarnData = {
+                        id: docId, brand: (formData.brand || '').trim(), color: (formData.color || '').trim(),
+                        category: (formData.category || '').trim(), material: (formData.material || '').trim(),
+                        quantity: newQty, price: newPrice, imageUrl: currentImageBase64 || '', history: history,
+                        createdAt: createdAtVal, updatedAt: Date.now()
+                    };
 
-    <div class="set-card">
-      <h3>🗄️ 資料備份（JSON）</h3>
-      <div class="desc">完整備份所有資料，或從備份還原。</div>
-      <div class="row">
-        <button class="btn soft" onclick="exportJSON()">📦 匯出 JSON 備份</button>
-        <button class="btn ghost" onclick="document.getElementById('fileJSON').click()">📥 匯入 JSON 還原</button>
-      </div>
-    </div>
+                    if (isFirebaseActive && db) await db.collection('yarns').doc(docId).set(yarnData);
+                    else saveToStorage(editingId ? yarns.map(y => y.id === editingId ? yarnData : y) : [yarnData, ...yarns]);
+                    setIsFormOpen(false);
+                } catch (err) { alert("儲存失敗：" + (err.message || "請檢查格式")); }
+            };
 
-    <div class="set-card">
-      <h3>⚠️ 危險區域</h3>
-      <div class="desc">清除本機與雲端全部資料。</div>
-      <div class="row"><button class="btn danger" onclick="clearAll()">🗑 清除全部資料</button></div>
-    </div>`;
-}
+            const deleteCurrentYarn = async () => {
+                if (!editingId) return;
+                if (!confirm("確定要刪除這筆資料嗎？")) return;
+                try {
+                    if (isFirebaseActive && db) await db.collection('yarns').doc(editingId).delete();
+                    else saveToStorage(yarns.filter(y => y.id !== editingId));
+                    setIsFormOpen(false);
+                } catch (err) { alert("刪除失敗：" + err.message); }
+            };
 
-function saveFirebaseCfg(){
-  state.fbConfig={
-    apiKey:document.getElementById('fb_apikey').value.trim(),
-    authDomain:document.getElementById('fb_auth').value.trim(),
-    projectId:document.getElementById('fb_project').value.trim(),
-    storageBucket:document.getElementById('fb_bucket').value.trim(),
-    messagingSenderId:document.getElementById('fb_sender').value.trim(),
-    appId:document.getElementById('fb_appid').value.trim(),
-    measurementId:document.getElementById('fb_measurement') ? document.getElementById('fb_measurement').value.trim() : ''
-  };
-  saveFBConfig();
-  testFirebase();
-}
+            const handleStockTransaction = () => {
+                const delta = Number(stockDelta) || 0;
+                if (delta <= 0) return;
+                const isOut = stockModalMode === 'out';
+                const currentQty = Number(formData.quantity) || 0;
+                const newQty = isOut ? Math.max(0, currentQty - delta) : currentQty + delta;
+                const actualDelta = newQty - currentQty;
+                
+                setFormData(prev => ({ ...prev, quantity: newQty }));
+                setEditingHistory(prev => [{
+                    id: `hist_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+                    action: isOut ? `出庫 (${actualDelta})` : `入庫 (+${actualDelta})`,
+                    note: (stockNote || '').trim(),
+                    time: stockDate || toDateLocal(Date.now()),
+                    delta: actualDelta
+                }, ...prev]);
+                setStockNote(''); setStockDelta(1);
+            };
 
-function clearAll(){
-  if(!confirm('確定清除全部資料？此操作無法復原！')) return;
-  state={v:1,updatedAt:Date.now(),categories:[],items:[],fbConfig:state.fbConfig};
-  saveLocal(); if(fb.ready) cloudDocRef().delete().catch(()=>{});
-  toast('已清除'); navigate('#/home'); renderAll();
-}
+            const deleteHistoryRecord = (histId) => {
+                const recordToDelete = currentEditingHistory.find(h => h.id === histId);
+                if (recordToDelete && recordToDelete.delta) {
+                    setFormData(prev => ({ ...prev, quantity: Math.max(0, Number(formData.quantity) - recordToDelete.delta) }));
+                }
+                setEditingHistory(prev => prev.filter(h => h.id !== histId));
+            };
 
-function downloadTemplate(){
-  const wb=XLSX.utils.book_new();
-  const allKeys=[]; state.categories.forEach(c=>c.customFields.forEach(f=>{ if(!allKeys.includes(f.name)) allKeys.push(f.name); }));
-  const common=['品類','名稱','建檔數量','單位','購買時間','購買平台','店鋪','購買連結','購買單價','實付總價','備註'];
-  const headers=common.concat(allKeys);
-  const row={}; headers.forEach(h=>row[h]='');
-  const ex={品類:'毛線',名稱:'牛奶棉 淡黃色',建檔數量:5,單位:'團',購買時間:'2026-01-01',購買平台:'蝦皮',店鋪:'範例毛線小舖',購買連結:'https://example.com',購買單價:45,實付總價:225,備註:'範例'};
-  if(allKeys.includes('品牌')) ex['品牌']='雪球'; if(allKeys.includes('顏色/色號')) ex['顏色/色號']='11淺紫色';
-  const ws1=XLSX.utils.json_to_sheet([row,ex],{header:headers});
-  XLSX.utils.book_append_sheet(wb,ws1,'物品資料');
-  XLSX.writeFile(wb,'暖暖收納_匯入模板.xlsx');
-  toast('✅ 模板已下載');
-}
+            const downloadTemplateCSV = () => {
+                const csvContent = "\uFEFF品牌,顏色,品項,材質,數量,單價,建立日期(YYYY-MM-DD)\n雪球,11淺紫色,小萌仔,冰條線,1,12.5,2026-09-02\n";
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.setAttribute('download', '毛線倉庫匯入範本.csv');
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            };
 
-function exportExcel(scope){
-  const selCat = scope==='one' ? document.getElementById('expCatSel').value : null;
-  const cats = selCat? [getCat(selCat)].filter(Boolean) : state.categories;
-  const allKeys=[]; cats.forEach(c=>c.customFields.forEach(f=>{ if(!allKeys.includes(f.name)) allKeys.push(f.name); }));
-  const common=['品類','名稱','建檔數量','單位','購買時間','購買平台','店鋪','購買連結','購買單價','實付總價','備註'];
-  const headers=common.concat(allKeys);
-  const wb=XLSX.utils.book_new();
-  const rows=[];
-  const items=state.items.filter(i=>cats.some(c=>c.id===i.categoryId));
-  items.forEach(i=>{
-    const c=getCat(i.categoryId);
-    const r={};
-    common.forEach(h=>r[h]='');
-    r['品類']=c?c.name:''; r['名稱']=itemTitle(i); r['建檔數量']=num(i.initialQty||0); r['單位']=i.unit||(c?c.defaultUnit:'');
-    r['購買時間']=i.buyTime?fmtDate(i.buyTime):''; r['購買平台']=i.platform||''; r['店鋪']=i.store||'';
-    r['購買連結']=i.buyLink||''; r['購買單價']=i.price!=null?i.price:''; r['實付總價']=i.totalPrice!=null?i.totalPrice:''; r['備註']=i.note||'';
-    if(c) c.customFields.forEach(f=>{ const v=i.custom&&i.custom[f.id]; r[f.name]=(v!=null)?v:''; });
-    rows.push(r);
-  });
-  const ws1=XLSX.utils.json_to_sheet(rows.length?rows:[{}],{header:headers});
-  XLSX.utils.book_append_sheet(wb,ws1,'物品資料');
-  XLSX.writeFile(wb,`暖暖收納_${selCat?(getCat(selCat)||{}).name:'全部'}.xlsx`);
-  toast('✅ 匯出完成');
-}
+            const handleCSVUpload = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = async (event) => {
+                    try {
+                        const text = event.target.result;
+                        const lines = text.split('\n');
+                        if (lines.length <= 1) return;
 
-function handleExcelFile(input){
-  const file=input.files[0]; if(!file) return;
-  const reader=new FileReader();
-  reader.onload=e=>{
-    try{
-      const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
-      parseImport(wb);
-    }catch(err){ toast('❌ 無法解析檔案'); }
-    input.value='';
-  };
-  reader.readAsArrayBuffer(file);
-}
+                        const baseTime = Date.now();
+                        const batch = isFirebaseActive && db ? db.batch() : null;
+                        let newItems = [...yarns];
 
-function parseImport(wb){
-  const ws1=wb.Sheets['物品資料']; const ws2=wb.Sheets['出入庫記錄'];
-  let itemRows=[], recRows=[];
-  if(ws1) itemRows=XLSX.utils.sheet_to_json(ws1,{defval:''});
-  if(ws2) recRows=XLSX.utils.sheet_to_json(ws2,{defval:''});
+                        for (let i = 1; i < lines.length; i++) {
+                            const line = lines[i].trim();
+                            if (!line) continue;
+                            const cols = line.split(',').map(c => c.replace(/^"(.*)"$/, '$1').trim());
+                            if (cols.length >= 2) {
+                                const qty = Number(cols[4]) || 0;
+                                const createdAtVal = cols[6] ? new Date(cols[6]).getTime() : baseTime;
+                                const docId = `csv_${baseTime}_${i}`;
+                                const newItem = {
+                                    id: docId, brand: cols[0] || '', color: cols[1] || '', category: cols[2] || '',
+                                    material: cols[3] || '', quantity: qty, price: Number(cols[5]) || 0, imageUrl: '',
+                                    history: [{ id: `hist_${baseTime}_${i}`, action: `Excel 匯入 (數量: ${qty})`, time: cols[6] || toDateLocal(Date.now()), delta: qty }],
+                                    createdAt: isNaN(createdAtVal) ? baseTime : createdAtVal, updatedAt: Date.now()
+                                };
+                                if (batch) batch.set(db.collection('yarns').doc(docId), newItem);
+                                else newItems.push(newItem);
+                            }
+                        }
+                        if (batch) await batch.commit();
+                        else saveToStorage(newItems);
+                        alert("🎉 成功匯入 Excel 資料！");
+                    } catch(err) { alert("CSV 格式解析失敗"); }
+                };
+                reader.readAsText(file);
+                e.target.value = '';
+            };
 
-  const validatedItems=itemRows.map((r,idx)=>{
-    const line=idx+2; const errs=[];
-    const catName=String(r['品類']||'').trim();
-    if(!catName){ errs.push('缺少品類'); }
-    const name=String(r['名稱']||'').trim();
-    if(r['建檔數量']!=='' && isNaN(parseFloat(r['建檔數量']))) errs.push('建檔數量需為數字');
-    return {line,errs,row:r,catName,name};
-  });
-  importResult={itemRows:validatedItems,recRows};
-  showModal('modalImport', `
-    <h3>📤 匯入預覽</h3>
-    <div style="font-size:13px;color:var(--text-light);margin-bottom:12px">物品資料 ${validatedItems.length} 行</div>
-    <div class="table-wrap">
-      <table class="pv"><thead><tr><th>行</th><th>品類</th><th>名稱</th><th>數量</th><th>狀態</th></tr></thead>
-      <tbody>${validatedItems.map(v=>`<tr class="${v.errs.length?'err-row':''}"><td>${v.line}</td><td>${esc(v.catName)}</td><td>${esc(v.name)}</td><td>${esc(v.row['建檔數量'])}</td><td>${v.errs.length?esc(v.errs.join('；')):'✅'}</td></tr>`).join('')}</tbody></table>
-    </div>
-    <div class="btn-row"><button class="btn ghost" onclick="closeModal('modalImport')">取消</button><button class="btn primary" onclick="confirmImport()">✅ 確認匯入</button></div>`);
-}
+            if (loading) {
+                return <div className="min-h-screen bg-[#FFFDF9] flex items-center justify-center"><div className="w-8 h-8 border-4 border-amber-400 border-t-transparent rounded-full animate-spin"></div></div>;
+            }
 
-function confirmImport(){
-  const res=importResult; if(!res) return;
-  let added=0;
-  res.itemRows.forEach(v=>{
-    if(v.errs.length) return;
-    const r=v.row;
-    let cat=state.categories.find(c=>c.name===v.catName);
-    if(!cat){ cat={id:uid(),name:v.catName,icon:'📦',color:'#F7B32B',defaultUnit:'',customFields:[]}; state.categories.push(cat); }
-    const custom={};
-    cat.customFields.forEach(f=>{ const cell=r[f.name]; if(cell!==''&&cell!=null) custom[f.id]=String(cell); });
-    const item={ id:uid(), name:v.name, categoryId:cat.id, unit:String(r['單位']||'').trim()||cat.defaultUnit||'',
-      initialQty:num(r['建檔數量']), images:[], custom,
-      buyTime:r['購買時間']? new Date(String(r['購買時間'])).getTime() || '' : '',
-      platform:String(r['購買平台']||''), store:String(r['店鋪']||''), buyLink:String(r['購買連結']||''),
-      price:r['購買單價']!==''?r['購買單價']:null, totalPrice:r['實付總價']!==''?r['實付總價']:null,
-      note:String(r['備註']||''), stockRecords:[], createdAt:Date.now() };
-    state.items.push(item);
-    added++;
-  });
-  importResult=null; closeModal('modalImport'); saveState();
-  toast(`✅ 匯入完成：新增 ${added} 筆`);
-  router();
-}
+            return (
+                <div className="min-h-screen bg-[#FFFDF9] text-[#5C5446] font-sans pb-24 md:pb-8 relative">
+                    <input type="file" id="csvFileInput" accept=".csv" className="hidden" onChange={handleCSVUpload} />
+                    <input type="file" id="imageFileInput" accept="image/*" ref={imageInputRef} className="hidden" onChange={handleImageUpload} />
 
-function exportJSON(){
-  const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
-  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`暖暖收納備份_${new Date().toISOString().slice(0,10)}.json`; a.click();
-  URL.revokeObjectURL(a.href); toast('✅ 備份已匯出');
-}
+                    <header className="bg-[#FFFDF9] sticky top-0 z-30 shadow-sm border-b border-amber-100">
+                        <div className="max-w-7xl mx-auto px-4 py-3 sm:px-6 lg:px-8">
+                            <div className="flex flex-col sm:flex-row justify-between gap-3 sm:items-center">
+                                <div className="relative flex-1 max-w-full sm:max-w-md">
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <span className="text-amber-300 text-sm">🔍</span>
+                                    </div>
+                                    <input
+                                        type="text" placeholder="搜尋顏色、品項、品牌..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
+                                        className="block w-full pl-9 pr-3 py-2 border-none rounded-full bg-amber-50/70 text-amber-900 placeholder-amber-300 focus:ring-2 focus:ring-amber-300 text-sm transition-shadow outline-none"
+                                    />
+                                </div>
+                                <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto overflow-x-auto hide-scrollbar">
+                                    <div className="flex gap-2 text-[11px] sm:text-xs font-medium text-amber-800 whitespace-nowrap bg-[#FDF8ED] px-3 py-1.5 rounded-full border border-amber-200/60 shadow-sm">
+                                        <span>共 <strong className="text-amber-900">{stats.totalItems}</strong> 件</span>
+                                        <div className="w-px bg-amber-200"></div>
+                                        <span>價值 <strong className="text-amber-900">¥{stats.totalValue.toLocaleString()}</strong></span>
+                                    </div>
+                                    
+                                    <button onClick={downloadTemplateCSV} className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-amber-800 bg-[#FDF8ED] hover:bg-amber-100/60 rounded-full transition-colors whitespace-nowrap border border-amber-200">
+                                        <span>匯入範本</span>
+                                    </button>
 
-function handleJSONFile(input){
-  const file=input.files[0]; if(!file) return;
-  const reader=new FileReader();
-  reader.onload=e=>{
-    try{
-      const d=JSON.parse(e.target.result);
-      if(!d || d.v!==1){ toast('❌ 不是有效的備份檔'); return; }
-      if(!confirm('匯入將覆蓋目前所有資料，確定？')) return;
-      state=Object.assign(state,d); saveLocal();
-      if(fb.ready) cloudPush();
-      toast('✅ 已還原'); router();
-    }catch(err){ toast('❌ 無法解析備份檔'); }
-    input.value='';
-  };
-  reader.readAsText(file);
-}
+                                    <button onClick={() => document.getElementById('csvFileInput').click()} className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold text-white bg-[#FFB017] hover:bg-amber-500 rounded-full transition-colors whitespace-nowrap shadow-md shadow-amber-200">
+                                        <span>匯入 Excel</span>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div className="mt-2.5 flex overflow-x-auto gap-2 pb-1 hide-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
+                                {filterTabs.map(tab => (
+                                    <button
+                                        key={tab} onClick={() => setActiveFilter(tab)}
+                                        className={`px-3 py-1 rounded-full text-[11px] sm:text-xs font-bold whitespace-nowrap transition-all ${
+                                            activeFilter === tab ? 'bg-[#FFB017] text-white shadow-md shadow-amber-200' : 'bg-white text-amber-800 hover:bg-amber-50 border border-amber-200/70'
+                                        }`}
+                                    >
+                                        {tab}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </header>
 
-function onGlobalSearch(q){
-  q=(q||'').trim(); if(!q){ return; }
-  const items=state.items.filter(i=>getItemFieldText(i).toLowerCase().includes(q.toLowerCase()));
-  if(items.length){ filterState.q=q; navigate('#/cat/'+items[0].categoryId); }
-  else toast('沒有搜尋結果');
-}
+                    <main className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 py-4">
+                        {filteredYarns.length === 0 ? (
+                            <div className="text-center py-20">
+                                <div className="text-5xl mx-auto mb-4 opacity-40">📦</div>
+                                <h2 className="text-lg font-bold text-amber-900 mb-1">倉庫空空的</h2>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-2 sm:gap-3">
+                                {filteredYarns.map(yarn => (
+                                    <div 
+                                        key={yarn.id} onClick={() => openEditForm(yarn)} 
+                                        className="bg-white rounded-[14px] sm:rounded-2xl overflow-hidden shadow-sm border border-amber-100 hover:shadow-md hover:border-amber-200 transition-all group flex flex-col relative cursor-pointer active:scale-95"
+                                    >
+                                        <div className="aspect-square bg-[#FDF8ED] relative p-1">
+                                            <div className="w-full h-full rounded-[10px] overflow-hidden relative">
+                                                {yarn.imageUrl ? (
+                                                    <img src={yarn.imageUrl} alt="" className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center text-amber-200 bg-amber-50">
+                                                        <span className="text-[10px] font-bold opacity-70">無圖片</span>
+                                                    </div>
+                                                )}
+                                                <div className="absolute bottom-1 right-1 z-10 bg-[#FFB017] text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow-sm border border-white min-w-[18px] text-center leading-none">
+                                                    {yarn.quantity}
+                                                </div>
+                                            </div>
+                                            <div className="absolute top-1.5 left-1.5 bg-[#84a95c] text-white text-[8px] sm:text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow-sm border border-white leading-none">
+                                                ¥{yarn.price}
+                                            </div>
+                                        </div>
 
-function showModal(id, html){ document.getElementById(id).querySelector('.modal').innerHTML=html; document.getElementById(id).classList.add('show'); }
-function closeModal(id){ document.getElementById(id).classList.remove('show'); }
-document.addEventListener('keydown',e=>{ if(e.key==='Escape') document.querySelectorAll('.modal-overlay.show').forEach(m=>m.classList.remove('show')); });
+                                        <div className="p-2 flex flex-col flex-1 bg-white justify-between">
+                                            <h3 className="text-[10px] sm:text-xs font-extrabold text-[#7A4016] leading-tight line-clamp-1 mb-1">
+                                                {yarn.color || '未命名'}
+                                            </h3>
+                                            
+                                            {/* ========================================== */}
+                                            {/* 修復排版：品牌與品項在同一橫行，並自動縮排 */}
+                                            {/* ========================================== */}
+                                            <div className="flex flex-row items-center gap-1 mt-auto overflow-hidden">
+                                                <span className="font-bold text-[#8B5A2B] truncate text-[9px] shrink-0 max-w-[50%]">{yarn.brand || '無品牌'}</span>
+                                                {yarn.category && <span className="truncate bg-[#FFF6E5] text-[#A67B5B] px-1 py-0.5 rounded text-center font-bold text-[8px] flex-1">{yarn.category}</span>}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </main>
 
-function renderAll(){ router(); }
+                    <button
+                        onClick={openAddForm}
+                        className="fixed bottom-6 right-6 md:bottom-10 md:right-10 bg-[#FFB017] hover:bg-amber-500 text-white w-14 h-14 md:w-16 md:h-16 rounded-full shadow-[0_8px_20px_rgba(255,176,23,0.5)] transition-transform hover:scale-105 active:scale-95 z-40 flex items-center justify-center border-[3px] border-white"
+                    >
+                        <span className="text-3xl font-bold pb-1">＋</span>
+                    </button>
 
-loadState(); loadFBConfig(); updateSyncUI();
-if(!location.hash) navigate('#/home'); else router();
-initFirebase();
-</script>
+                    {isFormOpen && (
+                        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-0 sm:p-4 transition-opacity">
+                            <div className="bg-[#FFFDF9] w-full max-w-md h-[92vh] sm:h-auto sm:max-h-[92vh] rounded-t-[32px] sm:rounded-[32px] shadow-2xl flex flex-col border-2 border-amber-100 overflow-hidden animate-scale-in">
+                                
+                                <div className="flex items-center justify-between px-6 py-4 bg-[#FDF8ED] border-b border-amber-100 shrink-0">
+                                    <h2 className="text-base font-bold text-amber-900">
+                                        {editingId ? '編輯物品與紀錄' : '新增物品'}
+                                    </h2>
+                                    <div className="flex items-center gap-2">
+                                        {editingId && (
+                                            <>
+                                                <button type="button" onClick={duplicateCurrentYarn} className="px-3 py-1.5 bg-[#E8F3E8] text-[#558B55] hover:bg-[#D4E8D4] text-xs font-bold rounded-full transition-colors">
+                                                    複製
+                                                </button>
+                                                <button type="button" onClick={deleteCurrentYarn} className="px-3 py-1.5 bg-[#FEEAEA] text-[#D86060] hover:bg-[#FAD4D4] text-xs font-bold rounded-full transition-colors">
+                                                    刪除
+                                                </button>
+                                            </>
+                                        )}
+                                        <button onClick={() => setIsFormOpen(false)} className="w-8 h-8 flex items-center justify-center text-[#FFB017] hover:bg-amber-100 rounded-full transition-colors">
+                                            <span className="text-lg font-bold">✕</span>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div className="overflow-y-auto flex-1 p-6 space-y-6 hide-scrollbar relative">
+                                    <div className="flex justify-center">
+                                        <div onClick={() => imageInputRef.current?.click()} className="w-32 h-32 rounded-[32px] border-2 border-dashed border-[#FFD98E] bg-[#FFF8E7] flex flex-col items-center justify-center cursor-pointer hover:border-[#FFB017] transition-colors overflow-hidden relative shadow-sm p-1">
+                                            <div className="w-full h-full rounded-[26px] overflow-hidden relative flex flex-col items-center justify-center">
+                                                {currentImageBase64 ? <img src={currentImageBase64} alt="" className="w-full h-full object-cover" /> : (
+                                                    <div className="flex flex-col items-center justify-center">
+                                                        <span className="text-3xl mb-1">📷</span>
+                                                        <span className="text-xs text-[#E59815] font-bold">上傳照片</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <form className="space-y-4">
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <AutocompleteInput label="品牌" name="brand" value={formData.brand} options={existingBrands} onChange={handleInputChange} placeholder="請輸入品牌" />
+                                            <div className="space-y-1.5">
+                                                <label className="text-xs font-bold text-amber-900/70">顏色</label>
+                                                <input type="text" name="color" value={formData.color || ''} onChange={handleInputChange} placeholder="請輸入顏色" className="w-full px-4 py-3 rounded-2xl bg-amber-50/50 border border-amber-100 focus:ring-2 focus:ring-amber-300 outline-none text-sm text-amber-900 font-medium transition-all" />
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <AutocompleteInput label="品項" name="category" value={formData.category} options={existingCategories} onChange={handleInputChange} placeholder="請輸入品項" />
+                                            <AutocompleteInput label="材質" name="material" value={formData.material} options={existingMaterials} onChange={handleInputChange} placeholder="請輸入材質" />
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-1.5">
+                                                <label className="text-xs font-bold text-amber-900/70">數量</label>
+                                                <input type="number" name="quantity" value={formData.quantity} onChange={handleInputChange} min="0" className="w-full px-4 py-3 rounded-2xl bg-amber-50/50 border border-amber-100 focus:ring-2 focus:ring-amber-300 outline-none text-sm font-bold text-amber-900 transition-all" />
+                                            </div>
+                                            <div className="space-y-1.5">
+                                                <label className="text-xs font-bold text-amber-900/70">單價</label>
+                                                <input type="number" name="price" value={formData.price} onChange={handleInputChange} min="0" step="0.01" className="w-full px-4 py-3 rounded-2xl bg-amber-50/50 border border-amber-100 focus:ring-2 focus:ring-amber-300 outline-none text-sm font-bold text-amber-900 transition-all" />
+                                            </div>
+                                        </div>
+                                        <div className="space-y-1.5 pb-2">
+                                            <label className="text-xs font-bold text-amber-900/70">建立商品日期</label>
+                                            <input type="date" name="createdAtInput" value={formData.createdAtInput} onChange={handleInputChange} className="w-full px-4 py-3 rounded-2xl bg-amber-50/50 border border-amber-100 focus:ring-2 focus:ring-amber-300 outline-none text-xs font-medium text-amber-900 transition-all" />
+                                        </div>
+                                    </form>
+
+                                    {editingId && (
+                                        <div className="pt-2 pb-4">
+                                            <div className="bg-[#FDF8ED] rounded-[28px] border border-amber-100 overflow-hidden shadow-sm">
+                                                <div className="flex bg-amber-100/40">
+                                                    <button type="button" onClick={() => setStockModalMode('in')} className={`flex-1 py-3 text-xs font-bold transition-colors ${stockModalMode === 'in' ? 'bg-[#FDF8ED] text-amber-900 border-t-[3px] border-[#FFB017] rounded-tr-xl' : 'text-amber-700/60 hover:text-amber-900'}`}>入庫</button>
+                                                    <button type="button" onClick={() => setStockModalMode('out')} className={`flex-1 py-3 text-xs font-bold transition-colors ${stockModalMode === 'out' ? 'bg-[#FDF8ED] text-amber-900 border-t-[3px] border-[#FFB017] rounded-tl-xl' : 'text-amber-700/60 hover:text-amber-900'}`}>出庫</button>
+                                                </div>
+                                                <div className="p-5 space-y-4">
+                                                    <div className="flex justify-between items-center bg-white px-4 py-3 rounded-2xl border border-amber-50">
+                                                        <span className="text-xs font-bold text-amber-900/70">庫存 ( {formData.quantity} &rarr; {stockModalMode === 'out' ? Math.max(0, formData.quantity - stockDelta) : formData.quantity + Number(stockDelta)} )</span>
+                                                        <div className="flex items-center gap-3 bg-[#FDF8ED] rounded-full px-1 py-1">
+                                                            <button type="button" onClick={() => setStockDelta(d => Math.max(1, d - 1))} className="w-6 h-6 flex items-center justify-center bg-white rounded-full text-[#FFB017] shadow-sm font-bold text-lg">-</button>
+                                                            <input type="number" min="1" value={stockDelta} onChange={e => setStockDelta(Number(e.target.value) || 1)} className="w-8 text-center bg-transparent border-none outline-none text-sm font-bold text-amber-900" />
+                                                            <button type="button" onClick={() => setStockDelta(d => d + 1)} className="w-6 h-6 flex items-center justify-center bg-white rounded-full text-[#FFB017] shadow-sm font-bold text-sm">+</button>
+                                                            <span className="text-xs text-amber-900/50 pr-2">件</span>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex justify-between items-center bg-white px-4 py-3 rounded-2xl border border-amber-50">
+                                                        <span className="text-xs font-bold text-amber-900/70">日期</span>
+                                                        <input type="date" value={stockDate} onChange={e => setStockDate(e.target.value)} className="bg-transparent border-none outline-none text-xs font-medium text-amber-900 text-right w-32" />
+                                                    </div>
+                                                    <textarea placeholder="說明請戳這裡～" value={stockNote} onChange={e => setStockNote(e.target.value)} className="w-full bg-white px-4 py-3 rounded-2xl border border-amber-50 outline-none text-xs text-amber-900 placeholder-amber-900/30 resize-none h-20" />
+                                                    <div className="flex justify-center pt-2">
+                                                        <button type="button" onClick={handleStockTransaction} className="px-8 py-2.5 bg-[#FFB017] hover:bg-amber-500 text-white rounded-full text-xs font-bold shadow-sm shadow-amber-200 transition-colors">確認紀錄</button>
+                                                    </div>
+                                                    {currentEditingHistory.length > 0 && (
+                                                        <div className="mt-4 pt-4 border-t border-amber-100/50 space-y-2 max-h-40 overflow-y-auto hide-scrollbar">
+                                                            {currentEditingHistory.map((item) => (
+                                                                <div key={item.id} className="flex justify-between items-center bg-white/80 px-3.5 py-2.5 rounded-2xl border border-amber-50 gap-2">
+                                                                    <div className="min-w-0 flex-1">
+                                                                        <div className="flex items-center gap-2 mb-0.5">
+                                                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${item.action.includes('入庫') || item.action.includes('建立') || item.action.includes('匯入') ? 'bg-[#E3F2E3] text-[#558B55]' : 'bg-[#FEEAEA] text-[#D86060]'}`}>{item.action}</span>
+                                                                            <span className="text-[10px] text-amber-600/60 font-medium">{item.time || ''}</span>
+                                                                        </div>
+                                                                        {item.note && <p className="text-[11px] text-amber-800/80 font-medium truncate">{item.note}</p>}
+                                                                    </div>
+                                                                    <button type="button" onClick={() => deleteHistoryRecord(item.id)} className="shrink-0 px-2.5 py-1 bg-[#FEEAEA] text-[#D86060] hover:bg-[#FAD4D4] text-[11px] font-bold rounded-full transition-colors">
+                                                                        刪除
+                                                                    </button>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="p-4 bg-[#FDF8ED] border-t border-amber-100 shrink-0 flex justify-center">
+                                    <button type="button" onClick={saveYarn} className="w-full max-w-xs py-3.5 rounded-[20px] font-bold text-white bg-[#FFB017] hover:bg-amber-500 transition-all shadow-md shadow-amber-200 text-sm active:scale-95">保存</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
 </body>
 </html>
