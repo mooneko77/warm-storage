@@ -12,7 +12,6 @@
 <!-- Firebase compat（綁定後才啟用） -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics-compat.js"></script>
 <style>
 :root{
   --bg:#FFF8E7; --bg2:#FFF3D4; --card:#FFFFFF; --card2:#FFFDF6;
@@ -26,11 +25,11 @@
   --shadow-lg:0 14px 40px rgba(90,70,50,.16);
 }
 *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
-html,body{margin:0;padding:0;}
+html,body{margin:0;padding:0;overflow-x:hidden;}
 body{
   font-family:"Microsoft JhengHei","PingFang TC","Heiti TC","Noto Sans TC",sans-serif;
   background:var(--bg); color:var(--text); line-height:1.5;
-  min-height:100vh;
+  min-height:100vh; -webkit-overflow-scrolling:touch;
 }
 button{font-family:inherit; cursor:pointer; border:none; background:none; color:inherit;}
 input,select,textarea{font-family:inherit; font-size:15px; color:var(--text);}
@@ -62,11 +61,10 @@ a{color:var(--primary-deep); text-decoration:none;}
 #topbar{
   position:sticky; top:0; z-index:50; display:flex; align-items:center; gap:10px;
   padding:12px 20px; background:rgba(255,248,231,.9); backdrop-filter:blur(10px);
-  border-bottom:1px solid var(--line); flex-wrap:nowrap; overflow-x:auto;
+  border-bottom:1px solid var(--line); flex-wrap:nowrap; /* 手機版同排：不換行 */
 }
-#topbar::-webkit-scrollbar { display:none; }
 #topbar .tb-title{font-size:18px;font-weight:700;flex-shrink:0;}
-.search-wrap{flex:1; min-width:100px; max-width:420px; position:relative;}
+.search-wrap{flex:1 1 0%; min-width:0; max-width:420px; position:relative;}
 .search-wrap input{width:100%;padding:10px 14px 10px 38px;border-radius:30px;border:1.5px solid var(--line);background:var(--card);outline:none;}
 .search-wrap .ico{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--text-light);}
 .sync-pill{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;padding:6px 12px;border-radius:30px;background:var(--card);border:1.5px solid var(--line);color:var(--text-light);}
@@ -88,10 +86,12 @@ a{color:var(--primary-deep); text-decoration:none;}
 
 /* ===== 卡片 ===== */
 .card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid rgba(243,228,198,.6);}
-.sec-title{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin:8px 2px 14px;}
-.sec-title h2{margin:0;font-size:18px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.sec-title{display:flex;align-items:center;justify-content:space-between;margin:8px 2px 14px;}
+.sec-title h2{margin:0;font-size:18px;}
 .sec-title .sub{color:var(--text-light);font-size:13px;}
-.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px;}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:22px;}
+/* 統計看板：三張統計卡同一橫欄並排、均分寬度（含手機端） */
+#view-stats .stat-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;}
 .stat-card{padding:16px 18px;border-radius:var(--radius);background:var(--card);box-shadow:var(--shadow);position:relative;overflow:hidden;}
 .stat-card .v{font-size:26px;font-weight:700;}
 .stat-card .l{font-size:13px;color:var(--text-light);margin-top:2px;}
@@ -124,8 +124,6 @@ a{color:var(--primary-deep); text-decoration:none;}
 .item-card .qty{position:absolute;top:18px;right:18px;background:rgba(255,255,255,.92);border-radius:14px;padding:2px 9px;font-size:12px;font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,.08);}
 .item-card .qty.low{background:var(--danger-bg);color:var(--danger);}
 .item-card .qty.none{background:#F1EDE6;color:#A79A86;}
-.item-card .tags{display:flex;flex-wrap:wrap;gap:4px;margin:6px 2px 2px;}
-.tag-chip{font-size:11px;background:var(--primary-soft);color:var(--primary-deep);padding:2px 8px;border-radius:20px;}
 .item-card .ck{position:absolute;top:10px;left:10px;z-index:5;display:none;}
 .batch-mode .ck{display:block;}
 .item-card.batch-selected{outline:3px solid var(--primary);}
@@ -149,8 +147,8 @@ a{color:var(--primary-deep); text-decoration:none;}
 .cf-sub label{display:inline-flex;align-items:center;gap:5px;color:var(--primary-deep);font-weight:600;cursor:pointer;}
 .cf-add{width:100%;margin-top:8px;padding:9px;border-radius:14px;border:1.5px dashed var(--primary);color:var(--primary-deep);background:var(--primary-soft);font-size:13.5px;font-weight:600;}
 /* 表單內自訂欄位（依型別） */
-.cf-img{display:flex;align-items:center;gap:8px;}
-.cf-img input{flex:1;}
+.cf-img{display:flex;align-items:center;gap:8px;max-width:100%;}
+.cf-img input{flex:1;min-width:0;}
 .cf-img img{width:44px;height:44px;object-fit:cover;border-radius:10px;border:1.5px solid var(--line);}
 /* 到期專區 */
 .exp-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px;}
@@ -163,9 +161,20 @@ a{color:var(--primary-deep); text-decoration:none;}
 /* 篩選列 */
 .filter-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center;}
 .filter-bar select,.filter-bar .btn{padding:8px 12px;border-radius:24px;border:1.5px solid var(--line);background:var(--card);font-size:13.5px;}
+.filter-bar input{padding:9px 13px;border-radius:24px;border:1.5px solid var(--line);background:var(--card);outline:none;flex:1;min-width:0;}
+.filter-bar input:focus{border-color:var(--primary);}
 .filter-bar .btn:active{transform:scale(.96);}
 .badge{font-size:11.5px;padding:2px 9px;border-radius:20px;font-weight:600;}
 .badge.orange{background:var(--primary-soft);color:var(--primary-deep);}
+/* 品類內頁頂部（手機適配） */
+.cat-head{display:flex;align-items:center;justify-content:space-between;gap:10px 14px;flex-wrap:wrap;margin:6px 2px 14px;}
+.cat-head-title{display:flex;align-items:center;gap:8px;font-size:18px;font-weight:700;min-width:0;}
+.cat-head-title .cat-ico{width:34px;height:34px;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;}
+.cat-head-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+/* 空狀態 */
+.empty-state{text-align:center;color:var(--text-light);padding:64px 0 70px;}
+.empty-state .es-ico{font-size:48px;margin-bottom:12px;opacity:.8;}
+.empty-state span{font-size:13px;}
 
 /* ===== 列表行 ===== */
 .row-list{display:flex;flex-direction:column;gap:10px;}
@@ -226,28 +235,78 @@ a{color:var(--primary-deep); text-decoration:none;}
 /* ===== 表單 ===== */
 .modal-overlay{position:fixed;inset:0;background:rgba(90,70,50,.45);backdrop-filter:blur(3px);z-index:200;display:none;align-items:flex-end;justify-content:center;}
 .modal-overlay.show{display:flex;}
-.modal{background:var(--card);width:100%;max-width:560px;max-height:92vh;overflow-y:auto;border-radius:24px 24px 0 0;padding:22px 20px 30px;animation:slideUp .25s;}
+.modal{background:var(--card);width:100%;max-width:560px;max-height:92vh;overflow-y:auto;overflow-x:hidden;border-radius:24px 24px 0 0;padding:22px 20px 30px;animation:slideUp .25s;}
 @keyframes slideUp{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
 .modal h3{margin:0 0 16px;font-size:19px;}
 .form-row{margin-bottom:14px;}
 .form-row label{display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:var(--text);}
 .form-row label .req{color:var(--danger);}
-.form-row input,.form-row select,.form-row textarea{width:100%;padding:11px 13px;border-radius:14px;border:1.5px solid var(--line);background:var(--card2);outline:none;transition:.15s;}
+/* ▓▓ 輸入格基礎樣式：想改格子「圓角 / 邊框 / 內距 / 底色」，改下面這一行 ▓▓ */
+.form-row input,.form-row select,.form-row textarea{width:100%;max-width:100%;padding:11px 13px;border-radius:14px;border:1.5px solid var(--line);background:var(--card2);outline:none;transition:.15s;}
 .form-row input:focus,.form-row select:focus,.form-row textarea:focus{border-color:var(--primary);background:#fff;}
 .form-row textarea{resize:vertical;min-height:70px;}
-.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 12px;}
+.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 12px;}
+/* 新增物品表單：兩欄式排版縮短頁面垂直長度；圖片上傳區維持滿版單欄、禁止橫向滾動 */
+.item-form-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+.item-form-grid .full{grid-column:1/-1;}
+/* 兩欄欄位等寬、互不擠壓：日期/下拉/輸入框均不超出欄寬 */
+.item-form-grid > .form-row{min-width:0;}
+/* ▓▓ 新增物品表單：統一所有輸入格高度、寬度、文字垂直對齊 ▓▓
+   想改「格子高度」：改下面 height 的數字（目前 44px，所有 input/select 同步）
+   想改「格子左右內距」：改 padding 的 13px
+   想改「格子間距」：改上方 .form-row 的 margin-bottom（目前 14px） */
+.item-form-grid input,
+.item-form-grid select{
+  height:44px;
+  padding:0 13px;
+  line-height:1.4;
+  box-sizing:border-box;
+  vertical-align:middle;
+  font-size:14px;
+}
+/* 下拉選單：移除手機原生樣式，自訂下拉箭頭，確保文字垂直居中、與左格等高 */
+.item-form-grid select{
+  -webkit-appearance:none;
+  appearance:none;
+  background-color:var(--card2);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat:no-repeat;
+  background-position:right 12px center;
+  background-size:12px;
+  padding-right:34px;
+}
+/* 日期輸入框：移除 iOS 原生樣式，自訂日曆圖示，確保與旁格、下格等高等寬 */
+.item-form-grid input[type="date"]{
+  -webkit-appearance:none;
+  appearance:none;
+  background-color:var(--card2);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='18' rx='2' ry='2'%3E%3C/rect%3E%3Cline x1='16' y1='2' x2='16' y2='6'%3E%3C/line%3E%3Cline x1='8' y1='2' x2='8' y2='6'%3E%3C/line%3E%3Cline x1='3' y1='10' x2='21' y2='10'%3E%3C/line%3E%3C/svg%3E");
+  background-repeat:no-repeat;
+  background-position:right 10px center;
+  background-size:16px;
+  padding-right:34px;
+  min-height:44px;
+  font-size:13px;
+}
+/* 隱藏瀏覽器原生日期圖示（改用自訂 SVG 圖示，避免圖示重複） */
+.item-form-grid input[type="date"]::-webkit-calendar-picker-indicator{
+  display:none;
+  opacity:0;
+  -webkit-appearance:none;
+}
+/* 焦點時背景變白，保持視覺一致 */
+.item-form-grid select:focus,
+.item-form-grid input[type="date"]:focus{
+  background-color:#fff;
+}
 .form-section{font-size:13.5px;font-weight:700;color:var(--primary-deep);margin:20px 0 12px;padding-left:10px;border-left:3px solid var(--primary);}
-.img-upload{display:flex;flex-wrap:wrap;gap:10px;}
+.img-upload{display:flex;flex-wrap:wrap;gap:10px;max-width:100%;}
 .img-up-box{width:74px;height:74px;border-radius:14px;border:2px dashed var(--accent2);display:flex;align-items:center;justify-content:center;color:var(--primary-deep);font-size:24px;cursor:pointer;background:var(--card2);}
 .img-thumb{width:74px;height:74px;border-radius:14px;object-fit:cover;position:relative;box-shadow:0 2px 8px rgba(0,0,0,.1);}
 .img-item{position:relative;}
 .img-item .rm{position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;background:var(--danger);color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.2);}
 .img-item .main-tag{position:absolute;left:4px;bottom:4px;background:var(--primary);color:#fff;font-size:10px;padding:1px 7px;border-radius:10px;}
 .img-item .setmain{position:absolute;right:4px;bottom:4px;background:rgba(255,255,255,.9);font-size:10px;padding:1px 7px;border-radius:10px;cursor:pointer;color:var(--primary-deep);}
-.tag-input-wrap{display:flex;flex-wrap:wrap;gap:6px;align-items:center;background:var(--card2);border:1.5px solid var(--line);border-radius:14px;padding:8px 10px;}
-.tag-input-wrap .tag-chip{display:inline-flex;align-items:center;gap:4px;font-size:12.5px;background:var(--primary-soft);color:var(--primary-deep);padding:4px 10px;border-radius:20px;}
-.tag-input-wrap .tag-chip .x{cursor:pointer;font-weight:700;}
-.tag-input-wrap input{flex:1;min-width:90px;border:none;background:none;padding:6px;outline:none;}
 .btn-row{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;}
 .seg{display:inline-flex;background:var(--bg2);border-radius:30px;padding:4px;}
 .seg button{padding:8px 16px;border-radius:26px;font-size:14px;color:var(--text-light);font-weight:600;}
@@ -258,6 +317,10 @@ a{color:var(--primary-deep); text-decoration:none;}
 .set-card h3{margin:0 0 6px;font-size:17px;display:flex;align-items:center;gap:8px;}
 .set-card .desc{font-size:13px;color:var(--text-light);margin-bottom:14px;}
 .set-card .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px;}
+/* 雲端同步三顆按鈕：同一橫欄並排、手機自適應、文字不換行 */
+.fb-btn-row{display:flex;flex-wrap:nowrap;gap:8px;align-items:stretch;margin-top:12px;}
+.fb-btn-row .btn{flex:1;justify-content:center;padding:10px 6px;white-space:nowrap;font-size:13.5px;}
+.fb-btn-row .btn:active{transform:scale(.97);}
 .cloud-status{font-size:13px;padding:8px 12px;border-radius:12px;background:var(--bg2);}
 .cloud-status.ok{background:var(--success-bg);color:var(--success);}
 .cloud-status.err{background:var(--danger-bg);color:var(--danger);}
@@ -295,15 +358,23 @@ table.pv th{background:var(--bg2);position:sticky;top:0;}
   #mnav .mn .mi{font-size:20px;}
   #mnav .mn.active{color:var(--primary-deep);font-weight:700;background:var(--primary-soft);}
   #views{padding:16px 14px 90px;}
-  #topbar{padding:10px 12px; gap:8px;}
+  #topbar{padding:8px 10px; gap:6px;}
+  #topbar .sync-pill{font-size:11px; padding:5px 8px; gap:4px;}
+  #topbar .top-btn{padding:6px 10px; font-size:12.5px;}
   .tb-title{display:none;}
-  .search-wrap input{padding:8px 12px 8px 32px; font-size:14px;}
-  .sync-pill{padding:6px 8px; font-size:12px;}
-  .top-btn{padding:7px 10px; font-size:13px;}
+  .cat-head{flex-direction:column;align-items:stretch;}
+  .cat-head-actions{justify-content:space-between;}
+  .fb-btn-row .btn{font-size:12px;padding:9px 4px;}
   .stat-grid{grid-template-columns:repeat(2,1fr);gap:10px;}
+  /* 統計看板三卡在窄屏下仍橫排，數字略縮以容納 */
+  #view-stats .stat-grid .stat-card{padding:12px 10px;}
+  #view-stats .stat-card .v{font-size:22px;}
+  #view-stats .stat-card .l{font-size:12px;}
   .detail-wrap{grid-template-columns:1fr;}
   .stats-wrap{grid-template-columns:1fr;}
   .form-grid{grid-template-columns:1fr;}
+  /* 新增物品表單手機端仍維持兩欄，縮短垂直長度 */
+  .item-form-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
   .cat-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));}
   .item-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));}
   .donut{width:120px;height:120px;}
@@ -327,9 +398,7 @@ table.pv th{background:var(--bg2);position:sticky;top:0;}
       <div><b>暖暖收納</b><small>個人收藏管理</small></div>
     </div>
     <div class="nav-item" data-nav="home"><span class="ni">🏠</span>首頁</div>
-    <div class="nav-item" data-nav="expiry"><span class="ni">⏰</span>到期專區</div>
     <div class="nav-item" data-nav="manage"><span class="ni">🗂️</span>品類管理</div>
-    <div class="nav-item" data-nav="tags"><span class="ni">🏷️</span>標籤管理</div>
     <div class="nav-item" data-nav="stats"><span class="ni">📊</span>統計看板</div>
     <div class="nav-item" data-nav="settings"><span class="ni">⚙️</span>設定</div>
     <div class="side-foot">📱 手機 · 平板 · 電腦多端同步<br>資料存於你的私人 Firebase</div>
@@ -341,7 +410,7 @@ table.pv th{background:var(--bg2);position:sticky;top:0;}
       <span class="tb-title">暖暖收納</span>
       <div class="search-wrap">
         <span class="ico">🔍</span>
-        <input id="globalSearch" placeholder="搜尋名稱、品牌、店鋪、標籤…" oninput="onGlobalSearch(this.value)">
+        <input id="globalSearch" placeholder="搜尋名稱、品牌、店鋪…" oninput="onGlobalSearch(this.value)">
       </div>
       <span id="syncPill" class="sync-pill off"><span class="dot"></span><span id="syncText">未連線雲端</span></span>
       <button class="top-btn ghost" onclick="syncNow()">🔄 同步</button>
@@ -358,8 +427,6 @@ table.pv th{background:var(--bg2);position:sticky;top:0;}
       <section id="view-detail" class="view"></section>
       <!-- 品類管理 -->
       <section id="view-manage" class="view"></section>
-      <!-- 標籤管理 -->
-      <section id="view-tags" class="view"></section>
       <!-- 統計 -->
       <section id="view-stats" class="view"></section>
       <!-- 設定 -->
@@ -371,9 +438,7 @@ table.pv th{background:var(--bg2);position:sticky;top:0;}
 <!-- 手機底部導航 -->
 <div id="mnav">
   <div class="mn" data-nav="home"><span class="mi">🏠</span>首頁</div>
-  <div class="mn" data-nav="expiry"><span class="mi">⏰</span>到期</div>
   <div class="mn" data-nav="manage"><span class="mi">🗂️</span>品類</div>
-  <div class="mn" data-nav="tags"><span class="mi">🏷️</span>標籤</div>
   <div class="mn" data-nav="stats"><span class="mi">📊</span>統計</div>
   <div class="mn" data-nav="settings"><span class="mi">⚙️</span>設定</div>
 </div>
@@ -453,23 +518,12 @@ let state = {
   v: 1,
   updatedAt: Date.now(),
   categories: [],   // {id,name,icon,color,defaultUnit,titleField,customFields:[{id,name,type,options,isExpiry}]}
-  tags: [],         // {id,name}
   items: [],        // 物品
   fbConfig: null
 };
 
 let fb = { app:null, db:null, ready:false, listening:false, lastSync:0 };
-// 預設 Firebase 專案設定（包含 measurementId 以支援 Analytics）
-const DEFAULT_FB_CONFIG = {
-  apiKey: "AIzaSyAxDvYOOiWWcAgxvhKXUfMmXP5w_yUlphg",
-  authDomain: "warm-storage.firebaseapp.com",
-  projectId: "warm-storage",
-  storageBucket: "warm-storage.firebasestorage.app",
-  messagingSenderId: "799184637539",
-  appId: "1:799184637539:web:8fd7f2e80b47047bfeb256",
-  measurementId: "G-35BBGQSRZF"
-};
-let currentView = 'home';
+
 let currentCatId = null;
 let currentItemId = null;
 let sortModes = {};   // {manage:false}
@@ -535,13 +589,15 @@ function normalizeCategories(){
     });
     it.custom = remapped;
   });
+  // 標籤功能已移除：清除舊資料中的 tags 殘留，避免殘留資料
+  state.tags = [];
+  state.items.forEach(it=>{ delete it.tags; });
 }
 
 /* ---------- 本地持久化 ---------- */
 function loadState(){
   try{ const raw=localStorage.getItem(LS_KEY); if(raw){ const d=JSON.parse(raw); if(d && d.v===1){ state=Object.assign(state,d); normalizeCategories(); return; } } }catch(e){}
   if(!state.categories.length){ state.categories = JSON.parse(JSON.stringify(PRESET_CATEGORIES)); }
-  if(!state.tags.length){ state.tags = [{id:'tag_want',name:'想買'},{id:'tag_fav',name:'最愛'}]; }
   normalizeCategories();
   saveLocal();
 }
@@ -554,11 +610,9 @@ function saveFBConfig(){ state.fbConfig ? localStorage.setItem(FB_KEY, JSON.stri
 async function initFirebase(){
   if(!state.fbConfig || !state.fbConfig.apiKey) return;
   try{
-    if(fb.app===null){ 
-      fb.app = firebase.initializeApp(state.fbConfig, 'warm'); 
-      if(typeof firebase.analytics === 'function' && state.fbConfig.measurementId) {
-        firebase.analytics(fb.app);
-      }
+    if(fb.app===null){ fb.app = firebase.initializeApp(state.fbConfig, 'warm'); }
+    if(state.fbConfig.measurementId && typeof firebase.analytics === 'function') {
+      firebase.analytics(fb.app);
     }
     fb.db = firebase.firestore(fb.app);
     fb.ready = true;
@@ -570,25 +624,25 @@ async function initFirebase(){
 async function testFirebase(){
   if(!state.fbConfig || !state.fbConfig.apiKey){ toast('請先填寫 Firebase 設定'); return; }
   try{
-    if(fb.app===null){ 
-      fb.app = firebase.initializeApp(state.fbConfig, 'warm'); 
-      if(typeof firebase.analytics === 'function' && state.fbConfig.measurementId) {
-        firebase.analytics(fb.app);
-      }
+    if(fb.app===null){ fb.app = firebase.initializeApp(state.fbConfig, 'warm'); }
+    if(state.fbConfig.measurementId && typeof firebase.analytics === 'function') {
+      firebase.analytics(fb.app);
     }
     fb.db = firebase.firestore(fb.app);
-    const snap = await fb.db.collection('warm_storage').doc('main').get();
+    await fb.db.collection('warm_storage').doc('main').get();
     fb.ready = true; updateSyncUI();
     toast('✅ Firebase 連線成功');
     startRealtime();
     await pullFromCloud(false);
   }catch(e){ 
-    console.error(e); fb.ready=false; updateSyncUI(); 
-    let msg = e.message||'請檢查設定';
-    if(e.code === 'permission-denied' || msg.includes('Missing or insufficient permissions')){
-      msg = '權限不足，請修改 Firestore 安全規則 (設為 true)';
+    console.error(e); 
+    fb.ready=false; 
+    updateSyncUI();
+    if(e.message && e.message.includes('Missing or insufficient permissions')){
+      toast('❌ Firebase 權限不足，請檢查資料庫規則');
+    } else {
+      toast('❌ 連線失敗：'+ (e.message||'請檢查設定')); 
     }
-    toast('❌ 連線失敗：'+ msg); 
   }
 }
 function updateSyncUI(){
@@ -605,12 +659,7 @@ async function cloudPush(){
     const data = { json: JSON.stringify(state), updatedAt: Date.now() };
     await cloudDocRef().set(data);
     fb.lastSync=Date.now(); updateSyncUI();
-  }catch(e){ 
-    console.error('push fail',e); 
-    if(e.code === 'permission-denied' || String(e.message).includes('permissions')){
-      toast('❌ 上傳失敗：權限不足，請至 Firebase 修改規則');
-    }
-  }
+  }catch(e){ console.error('push fail',e); }
 }
 async function pullFromCloud(silent){
   if(!fb.ready) return;
@@ -630,12 +679,7 @@ async function pullFromCloud(silent){
       await cloudPush(); // 首次上傳
     }
     updateSyncUI(); renderAll();
-  }catch(e){ 
-    console.error('pull fail',e); 
-    if(e.code === 'permission-denied' || String(e.message).includes('permissions')){
-      if(!silent) toast('❌ 下載失敗：權限不足，請至 Firebase 修改規則');
-    }
-  }
+  }catch(e){ console.error('pull fail',e); }
 }
 function startRealtime(){
   if(!fb.ready || fb.listening) return;
@@ -661,9 +705,28 @@ function unbindFirebase(){
   fb = { app:null,db:null,ready:false,listening:false,lastSync:0 };
   state.fbConfig=null; saveFBConfig(); updateSyncUI(); toast('已解除雲端綁定'); renderSettings();
 }
+function quickFillFB(val){
+  if(val==='000800'){
+    document.getElementById('fb_apikey').value='AIzaSyAxDvYOOiWWcAgxvhKXUfMmXP5w_yUlphg';
+    document.getElementById('fb_auth').value='warm-storage.firebaseapp.com';
+    document.getElementById('fb_project').value='warm-storage';
+    document.getElementById('fb_bucket').value='warm-storage.firebasestorage.app';
+    document.getElementById('fb_sender').value='799184637539';
+    document.getElementById('fb_appid').value='1:799184637539:web:8fd7f2e80b47047bfeb256';
+    document.getElementById('fb_measurement').value='G-35BBGQSRZF';
+    toast('✨ 魔法代碼生效！已自動填入設定');
+  }
+}
 
 /* ---------- 路由 ---------- */
-function navigate(hash){ location.hash = hash; }
+function navigate(hash){
+  // 修正跳轉 Bug：如果準備跳轉的網址與現在相同，代表瀏覽器不會觸發 hashchange，此時我們強制手動更新畫面
+  if (location.hash === hash || (location.hash === '' && hash === '#/home')) {
+    router();
+  } else {
+    location.hash = hash;
+  }
+}
 window.addEventListener('hashchange', router);
 function router(){
   const h = location.hash.replace(/^#\/?/,'') || 'home';
@@ -673,7 +736,6 @@ function router(){
   else if(parts[0]==='item'){ currentItemId=parts[1]; showView('view-detail'); renderDetail(); }
   else if(parts[0]==='expiry'){ showView('view-expiry'); renderExpiry(); }
   else if(parts[0]==='manage'){ showView('view-manage'); renderManage(); }
-  else if(parts[0]==='tags'){ showView('view-tags'); renderTags(); }
   else if(parts[0]==='stats'){ showView('view-stats'); renderStats(); }
   else if(parts[0]==='settings'){ showView('view-settings'); renderSettings(); }
   else { showView('view-home'); renderHome(); }
@@ -684,14 +746,13 @@ function showView(id){
   document.getElementById(id).classList.add('active');
 }
 function syncNav(){
+  // 修正 Bug：改用去掉斜線後的路由判斷，確保每個分頁都能正確對應底部／側欄高亮
+  // 即期品專區已整併進首頁「到期提醒」，因此 expiry 頁視為首頁的延伸，高亮「首頁」
+  const h = location.hash.replace(/^#\/?/,'') || 'home';
   let key='home';
-  if(location.hash.startsWith('#expiry')) key='expiry';
-  else if(location.hash.startsWith('#cat')) key='manage';
-  else if(location.hash.startsWith('#item')) key='manage';
-  else if(location.hash.startsWith('#manage')) key='manage';
-  else if(location.hash.startsWith('#tags')) key='tags';
-  else if(location.hash.startsWith('#stats')) key='stats';
-  else if(location.hash.startsWith('#settings')) key='settings';
+  if(h.startsWith('cat') || h.startsWith('item') || h.startsWith('manage')) key='manage';
+  else if(h.startsWith('stats')) key='stats';
+  else if(h.startsWith('settings')) key='settings';
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active', n.dataset.nav===key));
   document.querySelectorAll('#mnav .mn').forEach(n=>n.classList.toggle('active', n.dataset.nav===key));
 }
@@ -724,12 +785,6 @@ function renderHome(){
       <div class="stat-card"><span class="em">🗂️</span><div class="v">${catCount}</div><div class="l">品類數</div></div>
       <div class="stat-card" style="cursor:pointer" onclick="navigate('#/expiry')"><span class="em">⏰</span><div class="v">${urgentExp}</div><div class="l">到期提醒</div></div>
     </div>
-    <div class="exp-zone-hero" onclick="navigate('#/expiry')" style="cursor:pointer">
-      <div class="big">⏰</div>
-      <div style="flex:1"><b style="font-size:16px">即期品／到期專區</b>
-        <div style="font-size:13px;color:var(--text-light);margin-top:2px">管理有到期日的物品（化妝品、保養品），${urgentExp>0?`<b style="color:var(--danger)">${urgentExp} 件已到期或即將到期</b>`:'目前沒有需要處理的到期物品'}　→</div>
-      </div>
-    </div>
     <div class="sec-title"><h2>我的收藏</h2><span class="sub">長按可拖拽排序</span></div>
     <div class="cat-grid" id="homeCatGrid">${catCards}</div>`;
 
@@ -754,12 +809,13 @@ function saveCategoryOrderFromDom(gridId){
 function openCat(id){ navigate('#/cat/'+id); }
 
 /* ---------- 品類列表頁 ---------- */
-let filterState = { q:'', cat:'', tag:'', stock:'' };
+let filterState = { q:'' };
 function renderCatList(){
   const cat = getCat(currentCatId);
   if(!cat){ navigate('#/home'); return; }
   const el = document.getElementById('view-cat');
   let items = state.items.filter(i=>i.categoryId===cat.id);
+  const hasAny = items.length>0;
   const q = (filterState.q||'').trim().toLowerCase();
   if(q){
     items = items.filter(i=>{
@@ -767,7 +823,6 @@ function renderCatList(){
       return c.toLowerCase().includes(q);
     });
   }
-  if(filterState.tag){ items = items.filter(i=>(i.tags||[]).includes(filterState.tag)); }
 
   const isCustomSort = sortModes['cat:'+cat.id]===true;
   if(!isCustomSort){
@@ -775,12 +830,11 @@ function renderCatList(){
     items = [...items].sort((a,b)=> (num(b.createdAt||0))-(num(a.createdAt||0)));
   }
 
-  const tagOpts = state.tags.map(t=>`<option value="${esc(t.name)}" ${filterState.tag===t.name?'selected':''}>${esc(t.name)}</option>`).join('');
-
   el.innerHTML = `
     <button class="back-btn" onclick="navigate('#/home')">← 返回</button>
-    <div class="sec-title"><h2><span style="font-size:26px">${cat.icon}</span>${esc(cat.name)} <span class="badge orange">${items.length} 件</span></h2>
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+    <div class="cat-head">
+      <div class="cat-head-title"><span class="cat-ico" style="background:${cat.color}22">${cat.icon}</span><b>${esc(cat.name)}</b><span class="badge orange">${items.length} 件</span></div>
+      <div class="cat-head-actions">
         <label class="switch" title="切換排序模式"><input type="checkbox" ${isCustomSort?'checked':''} onchange="toggleCustomSort('${cat.id}',this.checked)"><span class="slider"></span></label>
         <span style="font-size:12.5px;color:var(--text-light)">自訂排序</span>
         ${batchMode?`<button class="btn danger sm" onclick="exitBatch()">取消批量</button>`:`<button class="btn soft sm" onclick="enterBatch()">批量</button>`}
@@ -788,17 +842,15 @@ function renderCatList(){
       </div>
     </div>
     <div class="filter-bar">
-      <input placeholder="搜尋此品類…" value="${esc(filterState.q)}" oninput="filterState.q=this.value;renderCatList()" style="padding:8px 12px;border-radius:24px;border:1.5px solid var(--line);background:var(--card);outline:none;flex:1;min-width:140px">
-      <select onchange="filterState.tag=this.value;renderCatList()"><option value="">全部標籤</option>${tagOpts}</select>
+      <input placeholder="搜尋此品類…" value="${esc(filterState.q)}" oninput="filterState.q=this.value;renderCatList()">
     </div>
-    ${items.length===0?`<div style="text-align:center;color:var(--text-light);padding:50px 0;">沒有符合的物品</div>`:''}
+    ${items.length===0?`<div class="empty-state"><div class="es-ico">${cat.icon}</div>${hasAny?'沒有符合的搜尋結果':'此品類還沒有物品'}<br><span>${hasAny?'試試調整搜尋或篩選':'點「＋ 新增物品」開始收納'}</span></div>`:''}
     <div class="item-grid ${batchMode?'batch-mode':''}" id="catItemGrid">
       ${items.map(i=>itemCardHTML(i,isCustomSort)).join('')}
     </div>
     ${batchMode?`<div style="position:sticky;bottom:80px;margin-top:14px;background:var(--card);border-radius:18px;box-shadow:var(--shadow-lg);padding:12px 16px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;border:1.5px solid var(--primary);">
       <b style="font-size:13.5px">已選 <span id="batchCount">${batchSel.size}</span> 項</b>
       <button class="btn soft sm" onclick="batchChangeCat()">改品類</button>
-      <button class="btn soft sm" onclick="batchAddTag()">加標籤</button>
       <button class="btn danger sm" onclick="batchDelete()">刪除</button>
     </div>`:''}`;
 
@@ -819,7 +871,7 @@ function renderCatList(){
 }
 function getItemFieldText(item){
   const c=getCat(item.categoryId);
-  const parts=[item.name, item.store||'', item.platform||'', (item.tags||[]).join(' ')];
+  const parts=[item.name, item.store||'', item.platform||''];
   if(c){ c.customFields.forEach(f=>{ const v=item.custom?item.custom[f.id]:''; if(v) parts.push(v); }); }
   if(item.yarnBrand) parts.push(item.yarnBrand);
   return parts.join(' ');
@@ -829,7 +881,6 @@ function itemCardHTML(i, customMode){
   const mainImg = (i.images||[]).find(im=>im.isMain) || (i.images||[])[0];
   const q = qtyOf(i);
   const unit = i.unit || (getCat(i.categoryId)||{}).defaultUnit || '';
-  const tags=(i.tags||[]).map(t=>`<span class="tag-chip">${esc(t)}</span>`).join('');
   const title=itemTitle(i);
   const exp=getExpiryInfo(i);
   const expBadge = exp?`<div class="exp-badge ${exp.status}" style="position:absolute;top:44px;left:8px">${exp.status==='expired'?'已到期':exp.status==='soon'?`剩 ${exp.diffDays} 天`:'⏰'}</div>`:'';
@@ -842,7 +893,6 @@ function itemCardHTML(i, customMode){
     <span class="qty">${q} ${esc(unit)}</span>
     <h4>${esc(title)}</h4>
     <div class="meta">${esc(getCat(i.categoryId)?.name||'')}${i.store?' · '+esc(i.store):''}</div>
-    ${tags?`<div class="tags">${tags}</div>`:''}
   </div>`;
 }
 function moveItem(id, dir){
@@ -869,19 +919,6 @@ function batchChangeCat(){
 function doBatchChangeCat(){
   const target=document.getElementById('bCatSel').value;
   state.items.forEach(i=>{ if(batchSel.has(i.id)){ i.categoryId=target; } });
-  closeModal('modalBatch'); batchMode=false; batchSel.clear(); saveState(); renderCatList(); toast('✅ 已更新');
-}
-function batchAddTag(){
-  if(!batchSel.size){ toast('請先勾選物品'); return; }
-  const opts=state.tags.map(t=>`<option value="${esc(t.name)}">${esc(t.name)}</option>`).join('');
-  showModal('modalBatch', `
-    <h3>批量新增標籤</h3>
-    <div class="form-row"><label>選擇標籤</label><select id="bTagSel">${opts}</select></div>
-    <div class="btn-row"><button class="btn ghost" onclick="closeModal('modalBatch')">取消</button><button class="btn primary" onclick="doBatchAddTag()">確認</button></div>`);
-}
-function doBatchAddTag(){
-  const tag=document.getElementById('bTagSel').value;
-  state.items.forEach(i=>{ if(batchSel.has(i.id)){ (i.tags=i.tags||[]); if(!i.tags.includes(tag)) i.tags.push(tag); } });
   closeModal('modalBatch'); batchMode=false; batchSel.clear(); saveState(); renderCatList(); toast('✅ 已更新');
 }
 function batchDelete(){
@@ -918,7 +955,7 @@ function renderDetail(){
       const d=new Date(String(val));
       const disp = isNaN(d)? esc(val) : fmtDate(val);
       const exp = f.isExpiry ? getExpiryInfo(item) : null;
-      addKV(esc(f.name), disp + (exp?` <span class="exp-badge ${exp.status}">${exp.status==='expired'?'已到期':exp.status==='soon'?`剩 ${exp.diffDays} 天`:'未到期'}</span>`:''));
+      addKV(esc(f.name), disp + (exp?` <span class="exp-badge ${exp.status}">${exp.status==='expired'?'已到期':exp.status==='soon'?`剩 ${exp.diffDays} 天`:'即期品'}</span>`:''));
     } else {
       addKV(esc(f.name), esc(val));
     }
@@ -927,7 +964,6 @@ function renderDetail(){
   if(item.buyTime) addKV('購買時間', fmtDate(item.buyTime));
   if(item.price!=null && item.price!=='') addKV('購買單價', '$'+num(item.price));
   if(item.totalPrice!=null && item.totalPrice!=='') addKV('實付總價', '$'+num(item.totalPrice));
-  if(item.tags && item.tags.length) addKV('標籤', item.tags.map(t=>`<span class="tag-chip">${esc(t)}</span>`).join(' '));
   if(item.note) addKV('備註', esc(item.note));
 
   const records = (item.stockRecords||[]).slice().sort((a,b)=>num(b.time)-num(a.time));
@@ -953,6 +989,7 @@ function renderDetail(){
           <button class="btn success" onclick="openStockForm('in')">＋ 入庫</button>
           <button class="btn primary" onclick="openStockForm('out')">－ 出庫</button>
           <button class="btn soft" onclick="openItemForm('${item.id}')">✏️ 編輯</button>
+          <button class="btn ghost" onclick="duplicateItem('${item.id}')">📄 複製該物品</button>
           <button class="btn danger" onclick="deleteItem('${item.id}')">🗑 刪除</button>
         </div>
         ${item.buyLink?`<div class="card" style="padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px;justify-content:space-between;flex-wrap:wrap;">
@@ -1010,10 +1047,35 @@ function openExternal(name, kind){
 }
 function deleteItem(id){
   if(!confirm('確定刪除此物品？此操作無法復原')) return;
+  // 修復跳轉 Bug：先取得物品歸屬的品類 ID，再將物品過濾掉
+  const item = getItem(id);
+  const catId = item ? item.categoryId : currentCatId;
+  
   state.items = state.items.filter(i=>i.id!==id);
   saveState();
-  if(currentItemId===id) navigate('#/cat/'+(getCat(state.items.find(i=>i.id===id)?.categoryId)||currentCatId));
-  else renderDetail();
+  
+  // 若當前在詳情頁，則回到品類頁面；否則重新渲染當前畫面
+  if(currentItemId===id) {
+    navigate('#/cat/' + catId);
+  } else {
+    renderDetail();
+  }
+}
+function duplicateItem(id){
+  const original = getItem(id);
+  if(!original) return;
+  // 複製全部資料（自訂欄位、購買資訊、圖片）生成新草稿；庫存數量與出入庫記錄不複製
+  const copy = JSON.parse(JSON.stringify(original));
+  copy.id = uid();
+  copy.name = original.name ? original.name + '（複製）' : '';
+  copy.createdAt = Date.now();
+  copy.stockRecords = [];   // 出入庫記錄不複製
+  copy.initialQty = 0;      // 庫存數量不複製
+  delete copy.customOrder;
+  state.items.push(copy);
+  saveState();              // 自動同步至 Firebase 多端
+  toast('✅ 已複製為新物品，可直接編輯後儲存');
+  navigate('#/item/' + copy.id);
 }
 
 /* ---------- 物品表單 ---------- */
@@ -1058,37 +1120,29 @@ function itemFormHTML(item, cat){
 
   return `
     <h3>${isNew?'新增物品':'編輯物品'}${cat?` · ${cat.icon} ${esc(cat.name)}`:''}</h3>
-    <div class="form-section">通用欄位</div>
-    <div class="form-row"><label>名稱 <span style="color:var(--text-light);font-size:12px">（選填，留空將以品類關鍵欄位顯示）</span></label><input id="f_name" value="${esc(item?item.name:'')}" placeholder="可留空"></div>
-    ${isNew?`<div class="form-row"><label>品類</label><select id="f_cat" onchange="onFormCatChange(this.value)">${catOpts}</select></div>`:''}
-    <div class="form-row"><label>圖片（可多張，長按拖拽排序，點「主圖」設為主圖）</label>
-      <div class="img-upload" id="imgList"></div>
-      <div class="img-up-box" onclick="document.getElementById('f_imgs').click()" style="margin-top:10px">＋</div>
-      <input type="file" id="f_imgs" accept="image/*" multiple style="display:none" onchange="onImgFiles(this)">
-    </div>
-    <div class="form-grid">
+    <div class="form-grid item-form-grid">
+      <div class="form-row full"><label>圖片（可多張，長按拖拽排序，點「主圖」設為主圖）</label>
+        <div class="img-upload" id="imgList"></div>
+        <div class="img-up-box" onclick="document.getElementById('f_imgs').click()" style="margin-top:10px">＋</div>
+        <input type="file" id="f_imgs" accept="image/*" multiple style="display:none" onchange="onImgFiles(this)">
+      </div>
+      <div class="form-section full">通用欄位</div>
+      <div class="form-row"><label>名稱</label><input id="f_name" value="${esc(item?item.name:'')}" placeholder="可留空，留空將以品類關鍵欄位顯示"></div>
+      ${isNew?`<div class="form-row"><label>品類</label><select id="f_cat" onchange="onFormCatChange(this.value)">${catOpts}</select></div>`:''}
       <div class="form-row"><label>建檔數量</label><input id="f_qty" type="number" min="0" value="${item?num(item.initialQty||0):''}" placeholder="0"></div>
       <div class="form-row"><label>單位（團/卷/克/隻…）</label><input id="f_unit" value="${esc(item?item.unit:(cat?cat.defaultUnit:''))}"></div>
-    </div>
-    <div class="form-row"><label>標籤</label>
-      <div class="tag-input-wrap" id="tagWrap">
-        ${(item?item.tags||[]:[]).map(t=>`<span class="tag-chip" data-tag="${esc(t)}">${esc(t)}<span class="x" onclick="removeTagChip(this)">×</span></span>`).join('')}
-        <input id="tagInput" placeholder="輸入後按 Enter 新增">
-      </div>
-    </div>
-    <div class="form-section">購買資訊</div>
-    <div class="form-grid">
+
+      ${customHTML?`<div class="form-section full">${cat.name} 專屬欄位</div>${customHTML}`:''}
+
+      <div class="form-section full">購買資訊</div>
       <div class="form-row"><label>購買時間</label><input id="f_btime" type="date" value="${item&&item.buyTime?fmtDate(item.buyTime):''}"></div>
       <div class="form-row"><label>購買平台</label><select id="f_platform">${platformOpts}</select></div>
-    </div>
-    <div class="form-row"><label>店鋪名稱</label><input id="f_store" value="${esc(item?item.store:'')}" placeholder="例如：蝦皮 · 毛線小舖"></div>
-    <div class="form-row"><label>商品連結</label><input id="f_link" value="${esc(item?item.buyLink:'')}" placeholder="https://…（點擊可直接跳轉）"></div>
-    <div class="form-grid">
+      <div class="form-row"><label>店鋪名稱</label><input id="f_store" value="${esc(item?item.store:'')}" placeholder="例如：蝦皮 · 毛線小舖"></div>
+      <div class="form-row"><label>商品連結</label><input id="f_link" value="${esc(item?item.buyLink:'')}" placeholder="https://…（點擊可直接跳轉）"></div>
       <div class="form-row"><label>購買單價</label><input id="f_price" type="number" min="0" step="0.01" value="${item&&item.price!=null?item.price:''}" placeholder="0"></div>
       <div class="form-row"><label>實付總價</label><input id="f_total" type="number" min="0" step="0.01" value="${item&&item.totalPrice!=null?item.totalPrice:''}" placeholder="0"></div>
+      <div class="form-row full"><label>備註</label><textarea id="f_note" placeholder="紀錄小故事、使用心得…">${esc(item?item.note:'')}</textarea></div>
     </div>
-    ${customHTML?`<div class="form-section">${cat.name} 專屬欄位</div>${customHTML}`:''}
-    <div class="form-row"><label>備註</label><textarea id="f_note" placeholder="紀錄小故事、使用心得…">${esc(item?item.note:'')}</textarea></div>
     <div class="btn-row">
       <button class="btn ghost" onclick="closeModal('modalItem')">取消</button>
       <button class="btn primary" onclick="saveItemForm()">💾 儲存</button>
@@ -1102,8 +1156,6 @@ function onFormCatChange(catId){
 }
 function initItemForm(){
   renderImgList();
-  const tagIn=document.getElementById('tagInput');
-  tagIn.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); const v=tagIn.value.trim(); if(v){ addTagChip(v); tagIn.value=''; } } });
 }
 function renderImgList(){
   const box=document.getElementById('imgList'); if(!box) return;
@@ -1127,13 +1179,6 @@ function movePendingImg(i, dir){
   renderImgList();
 }
 function removePendingImg(i){ pendingImages.splice(i,1); renderImgList(); }
-function addTagChip(name){
-  const w=document.getElementById('tagWrap'); const input=document.getElementById('tagInput');
-  const chip=document.createElement('span'); chip.className='tag-chip'; chip.dataset.tag=name;
-  chip.innerHTML=`${esc(name)}<span class="x" onclick="removeTagChip(this)">×</span>`;
-  w.insertBefore(chip, input);
-}
-function removeTagChip(el){ el.parentNode.remove(); }
 function onImgFiles(input){
   const files=[...input.files];
   if(!files.length) return;
@@ -1161,15 +1206,12 @@ function saveItemForm(){
   const catId = document.getElementById('f_cat') ? document.getElementById('f_cat').value : (getItem(editingItemId)?.categoryId);
   const custom={};
   document.querySelectorAll('#modalItem [data-cf]').forEach(inp=>{ custom[inp.dataset.cf]=inp.value; });
-  const tags=[...document.querySelectorAll('#tagWrap .tag-chip')].map(c=>c.dataset.tag);
-  tags.forEach(t=>{ if(!state.tags.some(x=>x.name===t)) state.tags.push({id:uid(),name:t}); });
   const data={
     name,
     categoryId: catId,
     unit: document.getElementById('f_unit').value.trim() || (getCat(catId)||{}).defaultUnit || '',
     initialQty: num(document.getElementById('f_qty').value),
     images: pendingImages,
-    tags,
     buyTime: document.getElementById('f_btime').value ? new Date(document.getElementById('f_btime').value+'T00:00:00').getTime() : '',
     platform: document.getElementById('f_platform').value,
     store: document.getElementById('f_store').value.trim(),
@@ -1250,13 +1292,10 @@ function renderManage(){
   const el=document.getElementById('view-manage');
   const editMode = sortModes['manage']===true;
   const cards = [...state.categories].map(c=>{
-    const items=state.items.filter(i=>i.categoryId===c.id);
-    const cf=c.customFields.map(f=>esc(f.name)).join('、');
-    const tf=c.customFields.find(f=>f.id===c.titleField);
     return `<div class="row-item cat-mng" data-id="${c.id}">
       <span class="sort-handle" title="拖拽排序">⋮⋮</span>
       <div class="thumb" style="background:${c.color}22;display:flex;align-items:center;justify-content:center;font-size:26px">${c.icon}</div>
-      <div class="info"><b>${esc(c.name)}</b><span>${items.length} 件 · 單位：${esc(c.defaultUnit||'—')}${tf?' · 標題欄位：'+esc(tf.name):''}${cf?' · 欄位：'+cf:''}</span></div>
+      <div class="info"><b>${esc(c.name)}</b></div>
       ${editMode?`<div class="mng-arrows"><button class="btn soft sm" onclick="moveCat('${c.id}',-1)" title="上移">↑</button><button class="btn soft sm" onclick="moveCat('${c.id}',1)" title="下移">↓</button></div>`:''}
       <button class="btn soft sm" onclick="openCatForm('${c.id}')">✏️</button>
       <button class="btn danger sm" onclick="deleteCat('${c.id}')">🗑</button>
@@ -1265,7 +1304,7 @@ function renderManage(){
 
   el.innerHTML = `
     <div class="sec-title"><h2>🗂️ 品類管理</h2>
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+      <div style="display:flex;gap:8px;align-items:center;">
         <button class="btn ${editMode?'primary':'ghost'} sm" onclick="toggleManageSort()">${editMode?'✓ 完成排序':'✋ 編輯排序模式'}</button>
         <button class="btn primary sm" onclick="openCatForm(null)">＋ 新增品類</button>
       </div>
@@ -1382,45 +1421,7 @@ function deleteCat(id){
   saveState(); renderManage(); toast('已刪除');
 }
 
-/* ---------- 標籤管理 ---------- */
-function renderTags(){
-  const el=document.getElementById('view-tags');
-  el.innerHTML = `
-    <div class="sec-title"><h2>🏷️ 標籤管理</h2>
-      <div style="display:flex;gap:8px;"><input id="newTagName" placeholder="新標籤名稱" style="padding:9px 13px;border-radius:24px;border:1.5px solid var(--line);background:var(--card);outline:none"><button class="btn primary sm" onclick="addTag()">＋ 新增</button></div>
-    </div>
-    <div class="sort-hint" style="margin-bottom:14px">🖐 長按標籤可拖拽調整顯示優先級，排序會同步到所有裝置。</div>
-    <div class="row-list" id="tagList">
-      ${state.tags.map(t=>`<div class="row-item" data-id="${t.id}"><span class="sort-handle">⋮⋮</span><span class="thumb" style="display:flex;align-items:center;justify-content:center;font-size:22px;background:var(--primary-soft)">🏷️</span><div class="info"><b>${esc(t.name)}</b><span>用於 ${state.items.filter(i=>(i.tags||[]).includes(t.name)).length} 件物品</span></div><div style="display:flex;flex-direction:column;gap:2px"><button class="btn soft sm" onclick="moveTag('${t.id}',-1)">↑</button><button class="btn soft sm" onclick="moveTag('${t.id}',1)">↓</button></div><button class="btn danger sm" onclick="deleteTag('${t.id}')">🗑</button></div>`).join('')||'<div style="color:var(--text-light);text-align:center;padding:30px">還沒有標籤</div>'}
-    </div>`;
-  if(window.Sortable && document.getElementById('tagList')){
-    new Sortable(document.getElementById('tagList'), { animation:200, delay:600, delayOnTouchOnly:true, handle:'.sort-handle',
-      ghostClass:'sortable-ghost', dragClass:'sortable-drag',
-      onEnd:()=>{ const list=document.getElementById('tagList'); const order=[...list.querySelectorAll('.row-item')].map(n=>n.dataset.id);
-        state.tags.sort((a,b)=>order.indexOf(a.id)-order.indexOf(b.id)); saveState(); toast('✅ 標籤排序已儲存'); } });
-  }
-}
-function addTag(){
-  const v=document.getElementById('newTagName').value.trim();
-  if(!v){ toast('請輸入標籤名稱'); return; }
-  if(state.tags.some(t=>t.name===v)){ toast('標籤已存在'); return; }
-  state.tags.push({id:uid(),name:v}); document.getElementById('newTagName').value='';
-  saveState(); renderTags(); toast('✅ 已新增');
-}
-function moveTag(id, dir){
-  const i=state.tags.findIndex(t=>t.id===id), j=i+dir;
-  if(i<0||j<0||j>=state.tags.length) return;
-  [state.tags[i],state.tags[j]]=[state.tags[j],state.tags[i]];
-  saveState(); renderTags(); toast('✅ 標籤順序已調整並同步');
-}
-function deleteTag(id){  const t=state.tags.find(x=>x.id===id);
-  if(!confirm(`確定刪除標籤「${t?t.name:''}」？物品上的此標籤也會移除`)) return;
-  state.tags=state.tags.filter(x=>x.id!==id);
-  state.items.forEach(i=>{ i.tags=(i.tags||[]).filter(n=>n!==(t?t.name:'')); });
-  saveState(); renderTags();
-}
 
-/* ---------- 統計看板 ---------- */
 function renderStats(){
   const el=document.getElementById('view-stats');
   const cats=state.categories;
@@ -1461,7 +1462,6 @@ function renderStats(){
       <div class="stat-card"><span class="em">📦</span><div class="v">${state.items.length}</div><div class="l">物品總數</div></div>
       <div class="stat-card"><span class="em">💰</span><div class="v">$${totalSpendSum.toLocaleString()}</div><div class="l">總花費</div></div>
       <div class="stat-card" style="cursor:pointer" onclick="navigate('#/expiry')"><span class="em">⏰</span><div class="v">${urgentExp}</div><div class="l">到期提醒</div></div>
-      <div class="stat-card"><span class="em">🧾</span><div class="v">${state.items.reduce((s,i)=>s+(i.stockRecords||[]).length,0)}</div><div class="l">流水筆數</div></div>
     </div>
     <div class="stats-wrap">
       <div class="card" style="padding:20px">
@@ -1495,7 +1495,7 @@ function renderExpiry(){
     const img=(item.images||[]).find(im=>im.isMain)||(item.images||[])[0];
     const badge = e.status==='expired'?`<span class="exp-badge expired">已到期 ${Math.abs(e.diffDays)} 天</span>`
       : e.status==='soon'?`<span class="exp-badge soon">剩 ${e.diffDays} 天</span>`
-      : `<span class="exp-badge ok">未到期</span>`;
+      : `<span class="exp-badge ok">即期品</span>`;
     return `<div class="row-item" style="cursor:pointer" onclick="openItem('${item.id}')">
       <div class="thumb" style="display:flex;align-items:center;justify-content:center;font-size:22px;background:${c?c.color:'#eee'}22;overflow:hidden">${img?`<img src="${img.dataUrl}" style="width:100%;height:100%;object-fit:cover">`:c?c.icon:'📦'}</div>
       <div class="info"><b>${esc(itemTitle(item))}</b><span>${c?esc(c.name):''} · ${fmtDate(e.date.getTime())} · ${badge}</span></div>
@@ -1507,12 +1507,12 @@ function renderExpiry(){
     <div class="exp-zone-hero">
       <div class="big">🧴</div>
       <div style="flex:1"><b style="font-size:16px">到期管理</b>
-        <div style="font-size:13px;color:var(--text-light);margin-top:2px">已到期 ${expired.length} 件 · 即將到期 ${soon.length} 件 · 未到期 ${ok.length} 件</div>
+        <div style="font-size:13px;color:var(--text-light);margin-top:2px">已到期 ${expired.length} 件 · 即將到期 ${soon.length} 件 · 即期品 ${ok.length} 件</div>
       </div>
     </div>
     ${grp('⚠️ 已到期', expired)}
-    ${grp('🔥 即將到期（30 天內）', soon)}
-    ${grp('✅ 未到期', ok)}
+    ${grp('🔥 即將到期', soon)}
+    ${grp('✅ 即期品', ok)}
     ${list.length?'':'<div style="text-align:center;color:var(--text-light);padding:60px 0"><div style="font-size:44px;margin-bottom:10px">🧴</div>到期專區目前沒有物品<br><span style="font-size:13px">在品類編輯中將某個「日期」欄位設為到期日，並於物品中填寫到期日，就會出現在這裡</span></div>'}
   `;
 }
@@ -1527,35 +1527,27 @@ function renderSettings(){
     <div class="sec-title"><h2>⚙️ 設定</h2></div>
 
     <div class="set-card">
-      <h3>☁️ Firebase 私有雲端綁定</h3>
-      <div class="desc">填入你的 Firebase 專案設定（Console → 專案設定 → 一般），資料將儲存在你自己的雲端，手機／平板／電腦多端即時同步。資料隔離由你的 Firebase 規則把關。</div>
-      <div class="form-row" style="margin-bottom: 18px; padding: 12px; background: var(--bg2); border-radius: 12px;">
-        <label style="color: var(--primary-deep)">🔑 快速通關（免手動輸入）</label>
-        <input id="fb_magic" placeholder="輸入通關密碼" oninput="checkMagicCode(this.value)">
-      </div>
-      <div class="form-grid">
-        <div class="form-row"><label>apiKey</label><input id="fb_apikey" value="${esc(cfg?cfg.apiKey:'')}" placeholder="AIza…"></div>
-        <div class="form-row"><label>authDomain</label><input id="fb_auth" value="${esc(cfg?cfg.authDomain:'')}" placeholder="xxx.firebaseapp.com"></div>
-        <div class="form-row"><label>projectId</label><input id="fb_project" value="${esc(cfg?cfg.projectId:'')}" placeholder="warm-storage-xxx"></div>
-        <div class="form-row"><label>storageBucket</label><input id="fb_bucket" value="${esc(cfg?cfg.storageBucket:'')}" placeholder="xxx.appspot.com"></div>
-        <div class="form-row"><label>messagingSenderId</label><input id="fb_sender" value="${esc(cfg?cfg.messagingSenderId:'')}"></div>
-        <div class="form-row"><label>appId</label><input id="fb_appid" value="${esc(cfg?cfg.appId:'')}" placeholder="1:xxx:web:xxx"></div>
-        <div class="form-row"><label>measurementId (選填)</label><input id="fb_measurement" value="${esc(cfg?cfg.measurementId:'')}" placeholder="G-XXX..."></div>
-      </div>
-      <div class="row">
+      <h3>☁️ 雲端同步（Firebase）</h3>
+      <div class="desc">輸入魔法代碼即可快速連線；資料存於你的私有 Firebase，手機／平板／電腦多端即時同步。</div>
+      <div class="form-row"><label>🔑 快速通關（魔法代碼）</label><input type="password" oninput="quickFillFB(this.value)" placeholder="輸入魔法代碼自動帶入..."></div>
+      <details style="margin:4px 0 12px">
+        <summary style="font-size:13px;color:var(--primary-deep);cursor:pointer;font-weight:600">手動輸入設定（進階）</summary>
+        <div class="form-grid" style="margin-top:12px">
+          <div class="form-row"><label>apiKey</label><input id="fb_apikey" value="${esc(cfg?cfg.apiKey:'')}" placeholder="AIza…"></div>
+          <div class="form-row"><label>authDomain</label><input id="fb_auth" value="${esc(cfg?cfg.authDomain:'')}" placeholder="xxx.firebaseapp.com"></div>
+          <div class="form-row"><label>projectId</label><input id="fb_project" value="${esc(cfg?cfg.projectId:'')}" placeholder="warm-storage-xxx"></div>
+          <div class="form-row"><label>storageBucket</label><input id="fb_bucket" value="${esc(cfg?cfg.storageBucket:'')}" placeholder="xxx.appspot.com"></div>
+          <div class="form-row"><label>messagingSenderId</label><input id="fb_sender" value="${esc(cfg?cfg.messagingSenderId:'')}"></div>
+          <div class="form-row"><label>appId</label><input id="fb_appid" value="${esc(cfg?cfg.appId:'')}" placeholder="1:xxx:web:xxx"></div>
+          <div class="form-row"><label>measurementId (Analytics)</label><input id="fb_measurement" value="${esc(cfg?cfg.measurementId:'')}" placeholder="G-..."></div>
+        </div>
+      </details>
+      <div class="fb-btn-row">
         <button class="btn primary" onclick="saveFirebaseCfg()">💾 儲存並連線</button>
         <button class="btn soft" onclick="syncNow()">🔄 立即同步</button>
         <button class="btn danger" onclick="unbindFirebase()">解除綁定</button>
       </div>
-      <div style="margin-top:14px" id="fbStatus" class="cloud-status ${cl}">${fb.ready?'✅ 已連線，資料即時同步中':(cfg?'⚠️ 尚未連線，請點「儲存並連線」':'🔌 尚未綁定 Firebase')}</div>
-      <div class="desc" style="margin-top:10px">🔐 Firestore 規則建議（本 APP 使用 <b>warm_storage/main</b> 文件）：因為沒有登入系統，請至 Firebase 控制台將規則設為以下內容以允許讀寫：<pre style="white-space:pre-wrap;background:var(--card2);padding:10px;border-radius:10px;font-size:12px;line-height:1.6">rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /warm_storage/{doc} {
-      allow read, write: if true; // ⚠️ 允許直接讀寫
-    }
-  }
-}</pre></div>
+      <div style="margin-top:14px" id="fbStatus" class="cloud-status ${cl}">${fb.ready?'✅ 已連線，資料即時同步中':(cfg?'⚠️ 尚未連線，請點「儲存並連線」':'🔌 尚未綁定（輸入魔法代碼 000800 快速連線）')}</div>
     </div>
 
     <div class="set-card">
@@ -1582,45 +1574,11 @@ service cloud.firestore {
     </div>
 
     <div class="set-card">
-      <h3>⏰ 到期提醒</h3>
-      <div class="desc">在品類編輯中，把某個「日期」型別的欄位勾選為「到期日」，該品類有填到期日的物品就會出現在「到期專區」（如化妝品、保養品）。毛線、周邊、公仔不需到期，可不勾選。</div>
-    </div>
-
-    <div class="set-card">
       <h3>⚠️ 危險區域</h3>
       <div class="desc">清除本機與雲端全部資料（無法復原）。</div>
       <div class="row"><button class="btn danger" onclick="clearAll()">🗑 清除全部資料</button></div>
-    </div>
-
-    <div class="set-card">
-      <h3>📄 Firebase Rules 建議</h3>
-      <pre style="background:var(--bg2);border-radius:12px;padding:14px;font-size:12px;overflow:auto;line-height:1.6">rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /warm_storage/{doc} {
-      allow read, write: if true;
-    }
-  }
-}</pre>
     </div>`;
 }
-
-function checkMagicCode(val){
-  if(val.trim() === '000800'){
-    document.getElementById('fb_apikey').value = DEFAULT_FB_CONFIG.apiKey;
-    document.getElementById('fb_auth').value = DEFAULT_FB_CONFIG.authDomain;
-    document.getElementById('fb_project').value = DEFAULT_FB_CONFIG.projectId;
-    document.getElementById('fb_bucket').value = DEFAULT_FB_CONFIG.storageBucket;
-    document.getElementById('fb_sender').value = DEFAULT_FB_CONFIG.messagingSenderId;
-    document.getElementById('fb_appid').value = DEFAULT_FB_CONFIG.appId;
-    if(document.getElementById('fb_measurement')) {
-      document.getElementById('fb_measurement').value = DEFAULT_FB_CONFIG.measurementId || '';
-    }
-    toast('✅ 已自動帶入 Firebase 設定');
-    document.getElementById('fb_magic').value = ''; // 填寫後清空通關密碼框
-  }
-}
-
 function saveFirebaseCfg(){
   state.fbConfig={
     apiKey:document.getElementById('fb_apikey').value.trim(),
@@ -1637,7 +1595,7 @@ function saveFirebaseCfg(){
 function clearAll(){
   if(!confirm('確定清除全部資料？此操作無法復原！')) return;
   if(!confirm('再次確認：所有物品、品類、流水都將刪除。')) return;
-  state={v:1,updatedAt:Date.now(),categories:[],tags:[],items:[],fbConfig:state.fbConfig};
+  state={v:1,updatedAt:Date.now(),categories:[],items:[],fbConfig:state.fbConfig};
   saveLocal(); if(fb.ready) cloudDocRef().delete().catch(()=>{});
   toast('已清除'); navigate('#/home'); renderAll();
 }
@@ -1647,12 +1605,12 @@ function downloadTemplate(){
   const wb=XLSX.utils.book_new();
   // 物品資料 sheet（包含各品類欄位並集）
   const allKeys=[]; state.categories.forEach(c=>c.customFields.forEach(f=>{ if(!allKeys.includes(f.name)) allKeys.push(f.name); }));
-  const common=['品類','名稱','建檔數量','單位','標籤','購買時間','購買平台','店鋪','購買連結','購買單價','實付總價','備註'];
+  const common=['品類','名稱','建檔數量','單位','購買時間','購買平台','店鋪','購買連結','購買單價','實付總價','備註'];
   const headers=common.concat(allKeys);
   const row={};
   headers.forEach(h=>row[h]='');
   // 範例行
-  const ex={品類:'毛線',名稱:'牛奶棉 淡黃色',建檔數量:5,單位:'團',標籤:'最愛',購買時間:'2026-01-01',購買平台:'蝦皮',店鋪:'範例毛線小舖',購買連結:'https://example.com',購買單價:45,實付總價:225,備註:'範例資料，可刪除'};
+  const ex={品類:'毛線',名稱:'牛奶棉 淡黃色',建檔數量:5,單位:'團',購買時間:'2026-01-01',購買平台:'蝦皮',店鋪:'範例毛線小舖',購買連結:'https://example.com',購買單價:45,實付總價:225,備註:'範例資料，可刪除'};
   if(allKeys.includes('品牌')) ex['品牌']='範例牌'; if(allKeys.includes('顏色/色號')) ex['顏色/色號']='C-01';
   const ws1=XLSX.utils.json_to_sheet([row,ex],{header:headers});
   ws1['!cols']=headers.map(h=>({wch: h.length>6?16:10}));
@@ -1665,8 +1623,6 @@ function downloadTemplate(){
   ws2['!cols']=[{wch:8},{wch:16},{wch:6},{wch:6},{wch:18},{wch:14}];
   XLSX.utils.book_append_sheet(wb,ws2,'出入庫記錄');
 
-  const ws3=XLSX.utils.json_to_sheet(state.tags.map(t=>({標籤名稱:t.name})));
-  XLSX.utils.book_append_sheet(wb,ws3,'標籤');
   XLSX.writeFile(wb,'暖暖收納_匯入模板.xlsx');
   toast('✅ 模板已下載');
 }
@@ -1674,7 +1630,7 @@ function exportExcel(scope){
   const selCat = scope==='one' ? document.getElementById('expCatSel').value : null;
   const cats = selCat? [getCat(selCat)].filter(Boolean) : state.categories;
   const allKeys=[]; cats.forEach(c=>c.customFields.forEach(f=>{ if(!allKeys.includes(f.name)) allKeys.push(f.name); }));
-  const common=['品類','名稱','建檔數量','單位','標籤','購買時間','購買平台','店鋪','購買連結','購買單價','實付總價','備註'];
+  const common=['品類','名稱','建檔數量','單位','購買時間','購買平台','店鋪','購買連結','購買單價','實付總價','備註'];
   const headers=common.concat(allKeys);
   const wb=XLSX.utils.book_new();
   const rows=[];
@@ -1684,7 +1640,7 @@ function exportExcel(scope){
     const r={};
     common.forEach(h=>r[h]='');
     r['品類']=c?c.name:''; r['名稱']=itemTitle(i); r['建檔數量']=num(i.initialQty||0); r['單位']=i.unit||(c?c.defaultUnit:'');
-    r['標籤']=(i.tags||[]).join('、'); r['購買時間']=i.buyTime?fmtDate(i.buyTime):''; r['購買平台']=i.platform||''; r['店鋪']=i.store||'';
+    r['購買時間']=i.buyTime?fmtDate(i.buyTime):''; r['購買平台']=i.platform||''; r['店鋪']=i.store||'';
     r['購買連結']=i.buyLink||''; r['購買單價']=i.price!=null?i.price:''; r['實付總價']=i.totalPrice!=null?i.totalPrice:''; r['備註']=i.note||'';
     if(c) c.customFields.forEach(f=>{ const v=i.custom&&i.custom[f.id]; r[f.name]=(v!=null)?v:''; });
     rows.push(r);
@@ -1717,11 +1673,10 @@ function handleExcelFile(input){
   reader.readAsArrayBuffer(file);
 }
 function parseImport(wb){
-  const ws1=wb.Sheets['物品資料']; const ws2=wb.Sheets['出入庫記錄']; const ws3=wb.Sheets['標籤'];
-  const errors=[]; let itemRows=[], recRows=[], tagRows=[];
+  const ws1=wb.Sheets['物品資料']; const ws2=wb.Sheets['出入庫記錄'];
+  const errors=[]; let itemRows=[], recRows=[];
   if(ws1) itemRows=XLSX.utils.sheet_to_json(ws1,{defval:''});
   if(ws2) recRows=XLSX.utils.sheet_to_json(ws2,{defval:''});
-  if(ws3) tagRows=XLSX.utils.sheet_to_json(ws3,{defval:''});
 
   // 驗證物品
   const validatedItems=itemRows.map((r,idx)=>{
@@ -1736,11 +1691,11 @@ function parseImport(wb){
     return (!String(r['物品名稱']||'').trim()) || (isNaN(parseFloat(r['數量'])) && r['數量']!=='') || (String(r['類型']||'')!=='入庫'&&String(r['類型']||'')!=='出庫'&&String(r['類型']||'')!=='');
   });
   // 存入全域
-  importResult={itemRows:validatedItems,recRows,tagRows};
+  importResult={itemRows:validatedItems,recRows};
   showModal('modalImport', `
     <h3>📤 匯入預覽</h3>
     <div style="font-size:13px;color:var(--text-light);margin-bottom:12px">
-      物品資料 ${validatedItems.length} 行 · 出入庫 ${recRows.length} 行 · 標籤 ${tagRows.length} 行${hasErr?' · ⚠️ 有錯誤行，紅色標出，確認後將跳過錯誤行':''}
+      物品資料 ${validatedItems.length} 行 · 出入庫 ${recRows.length} 行${hasErr?' · ⚠️ 有錯誤行，紅色標出，確認後將跳過錯誤行':''}
     </div>
     <div class="table-wrap">
       <table class="pv"><thead><tr><th>行</th><th>品類</th><th>名稱</th><th>數量</th><th>狀態</th></tr></thead>
@@ -1759,10 +1714,8 @@ function confirmImport(){
     if(!cat){ cat={id:uid(),name:v.catName,icon:'📦',color:'#F7B32B',defaultUnit:'',customFields:[]}; state.categories.push(cat); }
     const custom={};
     cat.customFields.forEach(f=>{ const cell=r[f.name]; if(cell!==''&&cell!=null) custom[f.id]=String(cell); });
-    const tags=String(r['標籤']||'').split(/[、,，]/).map(s=>s.trim()).filter(Boolean);
-    tags.forEach(t=>{ if(!state.tags.some(x=>x.name===t)) state.tags.push({id:uid(),name:t}); });
     const item={ id:uid(), name:v.name, categoryId:cat.id, unit:String(r['單位']||'').trim()||cat.defaultUnit||'',
-      initialQty:num(r['建檔數量']), images:[], tags, custom,
+      initialQty:num(r['建檔數量']), images:[], custom,
       buyTime:r['購買時間']? new Date(String(r['購買時間'])).getTime() || '' : '',
       platform:String(r['購買平台']||''), store:String(r['店鋪']||''), buyLink:String(r['購買連結']||''),
       price:r['購買單價']!==''?r['購買單價']:null, totalPrice:r['實付總價']!==''?r['實付總價']:null,
@@ -1784,8 +1737,6 @@ function confirmImport(){
     const rec={id:uid(),type,qty,time:isNaN(t)?Date.now():t,note:String(r['用途備註']||'')};
     item.stockRecords=item.stockRecords||[]; item.stockRecords.push(rec);
   });
-  // 標籤
-  res.tagRows.forEach(r=>{ const n=String(r['標籤名稱']||'').trim(); if(n&&!state.tags.some(t=>t.name===n)) state.tags.push({id:uid(),name:n}); });
   importResult=null;
   closeModal('modalImport');
   saveState();
@@ -1840,13 +1791,7 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape') document.querySele
 
 /* ---------- 渲染入口 ---------- */
 function renderAll(){
-  if(currentView==='home'||location.hash===''||location.hash==='#/'||location.hash==='#/home') renderHome();
-  else if(location.hash.startsWith('#/cat')) renderCatList();
-  else if(location.hash.startsWith('#/item')) renderDetail();
-  else if(location.hash.startsWith('#/manage')) renderManage();
-  else if(location.hash.startsWith('#/tags')) renderTags();
-  else if(location.hash.startsWith('#/stats')) renderStats();
-  else if(location.hash.startsWith('#/settings')) renderSettings();
+  router(); // 直接使用最新的 router 邏輯重繪畫面，防止同步時跳轉錯誤
 }
 
 /* ---------- 啟動 ---------- */
