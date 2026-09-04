@@ -12,6 +12,7 @@
 <!-- Firebase compat（綁定後才啟用） -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics-compat.js"></script>
 <style>
 :root{
   --bg:#FFF8E7; --bg2:#FFF3D4; --card:#FFFFFF; --card2:#FFFDF6;
@@ -133,6 +134,30 @@ a{color:var(--primary-deep); text-decoration:none;}
 .img-arrows button{width:20px;height:20px;border-radius:8px;font-size:11px;background:rgba(255,255,255,.92);border:1px solid var(--line);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.1);}
 .mng-arrows{display:flex;flex-direction:column;gap:3px;flex-shrink:0;}
 .mng-arrows .btn{width:38px;height:34px;padding:0;justify-content:center;font-size:16px;border-radius:12px;background:var(--primary-soft);color:var(--primary-deep);}
+/* 欄位 DIY 編輯器 */
+.cf-editor{display:flex;flex-direction:column;gap:8px;margin:8px 0 4px;max-height:340px;overflow:auto;padding-right:4px;}
+.cf-row{background:var(--card2);border:1.5px solid var(--line);border-radius:14px;padding:9px 10px;}
+.cf-head{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.cf-head .sort-handle{cursor:grab;color:var(--text-light);font-size:15px;user-select:none;}
+.cf-name{flex:1;min-width:90px;padding:7px 10px;border-radius:10px;border:1.5px solid var(--line);background:var(--card);outline:none;font-size:13.5px;}
+.cf-type{padding:6px 8px;border-radius:10px;border:1.5px solid var(--line);background:var(--card);font-size:12.5px;outline:none;}
+.cf-mini{width:26px;height:26px;border-radius:9px;background:var(--primary-soft);color:var(--primary-deep);font-size:13px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;}
+.cf-mini.danger{background:var(--danger-bg);color:var(--danger);}
+.cf-sub{margin-top:7px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:12.5px;color:var(--text-light);}
+.cf-sub input[type=text]{flex:1;min-width:140px;padding:6px 10px;border-radius:10px;border:1.5px solid var(--line);background:var(--card);outline:none;font-size:12.5px;}
+.cf-sub label{display:inline-flex;align-items:center;gap:5px;color:var(--primary-deep);font-weight:600;cursor:pointer;}
+.cf-add{width:100%;margin-top:8px;padding:9px;border-radius:14px;border:1.5px dashed var(--primary);color:var(--primary-deep);background:var(--primary-soft);font-size:13.5px;font-weight:600;}
+/* 表單內自訂欄位（依型別） */
+.cf-img{display:flex;align-items:center;gap:8px;}
+.cf-img input{flex:1;}
+.cf-img img{width:44px;height:44px;object-fit:cover;border-radius:10px;border:1.5px solid var(--line);}
+/* 到期專區 */
+.exp-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px;}
+.exp-badge.expired{background:var(--danger-bg);color:var(--danger);}
+.exp-badge.soon{background:#FDEBD8;color:#E67E22;}
+.exp-badge.ok{background:var(--success-bg);color:var(--success);}
+.exp-zone-hero{display:flex;align-items:center;gap:14px;background:linear-gradient(135deg,#FFF3D4,#FFE7AE);border-radius:18px;padding:18px 20px;margin-bottom:16px;border:1.5px solid #F3D58A;}
+.exp-zone-hero .big{font-size:34px;}
 
 /* 篩選列 */
 .filter-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center;}
@@ -298,6 +323,7 @@ table.pv th{background:var(--bg2);position:sticky;top:0;}
       <div><b>暖暖收納</b><small>個人收藏管理</small></div>
     </div>
     <div class="nav-item" data-nav="home"><span class="ni">🏠</span>首頁</div>
+    <div class="nav-item" data-nav="expiry"><span class="ni">⏰</span>到期專區</div>
     <div class="nav-item" data-nav="manage"><span class="ni">🗂️</span>品類管理</div>
     <div class="nav-item" data-nav="tags"><span class="ni">🏷️</span>標籤管理</div>
     <div class="nav-item" data-nav="stats"><span class="ni">📊</span>統計看板</div>
@@ -320,6 +346,8 @@ table.pv th{background:var(--bg2);position:sticky;top:0;}
     <main id="views">
       <!-- 首頁 -->
       <section id="view-home" class="view"></section>
+      <!-- 到期專區 -->
+      <section id="view-expiry" class="view"></section>
       <!-- 品類列表 -->
       <section id="view-cat" class="view"></section>
       <!-- 物品詳情 -->
@@ -339,6 +367,7 @@ table.pv th{background:var(--bg2);position:sticky;top:0;}
 <!-- 手機底部導航 -->
 <div id="mnav">
   <div class="mn" data-nav="home"><span class="mi">🏠</span>首頁</div>
+  <div class="mn" data-nav="expiry"><span class="mi">⏰</span>到期</div>
   <div class="mn" data-nav="manage"><span class="mi">🗂️</span>品類</div>
   <div class="mn" data-nav="tags"><span class="mi">🏷️</span>標籤</div>
   <div class="mn" data-nav="stats"><span class="mi">📊</span>統計</div>
@@ -376,26 +405,42 @@ table.pv th{background:var(--bg2);position:sticky;top:0;}
 const LS_KEY = 'warm_storage_v1';
 const FB_KEY = 'warm_storage_fb_v1';
 const PLATFORMS = ['淘寶','蝦皮','拼多多','天貓','京東','官網','實體店面','其他'];
+const FIELD_TYPES = [
+  {v:'text',  n:'文字'},
+  {v:'number',n:'數字'},
+  {v:'select',n:'選擇選項'},
+  {v:'date',  n:'日期'},
+  {v:'image', n:'圖片'},
+  {v:'link',  n:'連結'}
+];
 const PRESET_CATEGORIES = [
-  {id:'cat_yarn', name:'毛線', icon:'🧶', color:'#F7A35C', defaultUnit:'團', lowStock:2,
+  {id:'cat_yarn', name:'毛線', icon:'🧶', color:'#F7A35C', defaultUnit:'團', lowStock:2, titleField:'f_yarn_color',
    customFields:[
-     {key:'品牌', type:'text'},
-     {key:'顏色/色號', type:'text'},
-     {key:'品相', type:'select', options:['全新','近新','良好','一般','已拆用']},
-     {key:'材質', type:'text'}
+     {id:'f_yarn_brand', name:'品牌', type:'text'},
+     {id:'f_yarn_color', name:'顏色/色號', type:'text'},
+     {id:'f_yarn_cond', name:'品相', type:'select', options:['全新','近新','良好','一般','已拆用']},
+     {id:'f_yarn_mat', name:'材質', type:'text'}
    ]},
-  {id:'cat_doll', name:'公仔', icon:'🧸', color:'#F7B32B', defaultUnit:'隻', lowStock:0,
+  {id:'cat_doll', name:'公仔', icon:'🧸', color:'#F7B32B', defaultUnit:'隻', lowStock:0, titleField:'f_doll_ip',
    customFields:[
-     {key:'IP', type:'text'},
-     {key:'尺寸', type:'text'},
-     {key:'是否絕版', type:'select', options:['是','否']}
+     {id:'f_doll_ip', name:'IP', type:'text'},
+     {id:'f_doll_size', name:'尺寸', type:'text'},
+     {id:'f_doll_retired', name:'是否絕版', type:'select', options:['是','否']}
    ]},
-  {id:'cat_idol', name:'偶像周邊', icon:'💿', color:'#F28E8E', defaultUnit:'個', lowStock:0,
+  {id:'cat_idol', name:'偶像周邊', icon:'💿', color:'#F28E8E', defaultUnit:'個', lowStock:0, titleField:'f_idol_type',
    customFields:[
-     {key:'藝人', type:'text'},
-     {key:'專輯歸屬', type:'text'},
-     {key:'卡面編號', type:'text'},
-     {key:'品相', type:'select', options:['全新','近新','良好','一般','已拆用']}
+     {id:'f_idol_group', name:'團體名稱', type:'text'},
+     {id:'f_idol_album', name:'專輯名稱', type:'text'},
+     {id:'f_idol_member', name:'成員', type:'text'},
+     {id:'f_idol_type', name:'物品類型', type:'select', options:['小卡','娃娃','CD','吊飾','公仔','其他']}
+   ]},
+  {id:'cat_cosm', name:'化妝品保養品', icon:'💄', color:'#C9A2E8', defaultUnit:'件', lowStock:0, titleField:'f_cosm_sub',
+   customFields:[
+     {id:'f_cosm_brand', name:'品牌', type:'text'},
+     {id:'f_cosm_sub', name:'品類細分', type:'select', options:['底妝','粉底液','粉餅','口紅','腮紅液','腮紅膏','眼影','眼線','睫毛膏','精華','乳液','面霜','面膜','洗卸','香水','其他']},
+     {id:'f_cosm_cap', name:'容量', type:'text'},
+     {id:'f_cosm_shade', name:'色號', type:'text'},
+     {id:'f_cosm_exp', name:'到期日', type:'date', isExpiry:true}
    ]}
 ];
 
@@ -403,14 +448,23 @@ const PRESET_CATEGORIES = [
 let state = {
   v: 1,
   updatedAt: Date.now(),
-  categories: [],   // {id,name,icon,color,defaultUnit,lowStock,customFields:[{key,type,options}]}
+  categories: [],   // {id,name,icon,color,defaultUnit,titleField,customFields:[{id,name,type,options,isExpiry}]}
   tags: [],         // {id,name}
   items: [],        // 物品
-  fbConfig: null,
-  lowStockDefault: 1
+  fbConfig: null
 };
 
 let fb = { app:null, db:null, ready:false, listening:false, lastSync:0 };
+// 預設 Firebase 專案設定（包含 measurementId 以支援 Analytics）
+const DEFAULT_FB_CONFIG = {
+  apiKey: "AIzaSyAxDvYOOiWWcAgxvhKXUfMmXP5w_yUlphg",
+  authDomain: "warm-storage.firebaseapp.com",
+  projectId: "warm-storage",
+  storageBucket: "warm-storage.firebasestorage.app",
+  messagingSenderId: "799184637539",
+  appId: "1:799184637539:web:8fd7f2e80b47047bfeb256",
+  measurementId: "G-35BBGQSRZF"
+};
 let currentView = 'home';
 let currentCatId = null;
 let currentItemId = null;
@@ -430,13 +484,61 @@ function getCat(id){ return state.categories.find(c=>c.id===id); }
 function getItem(id){ return state.items.find(i=>i.id===id); }
 function qtyOf(item){ let q=num(item.initialQty||0); for(const r of item.stockRecords||[]){ q += r.type==='in'?num(r.qty):-num(r.qty); } return q; }
 function totalSpend(item){ if(num(item.totalPrice||0)>0) return num(item.totalPrice); return num(item.price||0)*Math.max(1,num(item.initialQty||1)); }
-function lowState(item){ const c=getCat(item.categoryId); const th = c? num(c.lowStock||0) : state.lowStockDefault; const q=qtyOf(item); if(q<=0) return 'none'; if(th>0 && q<=th) return 'low'; return 'ok'; }
+function itemTitle(item){
+  if(item && item.name && String(item.name).trim()) return String(item.name).trim();
+  const c = item ? getCat(item.categoryId) : null;
+  if(c && c.titleField && item.custom && item.custom[c.titleField]!=null && String(item.custom[c.titleField]).trim()!=='')
+    return String(item.custom[c.titleField]).trim();
+  return '（未命名）';
+}
+// 到期資訊：回傳 {field, date, status} 或 null（該物品無到期欄位或未填）
+function getExpiryInfo(item){
+  const c=getCat(item.categoryId); if(!c) return null;
+  const f=(c.customFields||[]).find(x=>x.isExpiry && x.type==='date');
+  if(!f) return null;
+  const v=item.custom && item.custom[f.id];
+  if(!v || !String(v).trim()) return null;
+  const t=new Date(String(v));
+  if(isNaN(t.getTime())) return null;
+  const today=new Date(); today.setHours(0,0,0,0);
+  const exp=new Date(t.getFullYear(),t.getMonth(),t.getDate());
+  const diffDays=Math.round((exp-today)/86400000);
+  const status = diffDays<0 ? 'expired' : (diffDays<=30 ? 'soon' : 'ok');
+  return {item, field:f, date:t, diffDays, status};
+}
+function normalizeCategories(){
+  state.categories.forEach(c=>{
+    (c.customFields||[]).forEach(f=>{
+      if(!f.id) f.id = f.key || uid();
+      if(!f.name) f.name = f.key || f.id;
+      if(!f.type) f.type='text';
+      if(f.type==='select' && !Array.isArray(f.options)) f.options=[];
+      if(!('isExpiry' in f)) f.isExpiry=false;
+    });
+    if(!c.titleField){
+      const pick=['顏色/色號','IP','物品類型','品類細分','色號','成員'];
+      const f=c.customFields.find(x=>pick.includes(x.name)) || c.customFields[0];
+      c.titleField = f ? f.id : '';
+    }
+  });
+  // 遷移舊物品 custom：舊鍵為欄位名稱 → 對應新欄位 id
+  state.items.forEach(it=>{
+    const c=getCat(it.categoryId); if(!c || !it.custom) return;
+    const remapped={};
+    c.customFields.forEach(f=>{
+      if(it.custom[f.id]!=null){ remapped[f.id]=it.custom[f.id]; }
+      else if(it.custom[f.name]!=null){ remapped[f.id]=it.custom[f.name]; }
+    });
+    it.custom = remapped;
+  });
+}
 
 /* ---------- 本地持久化 ---------- */
 function loadState(){
-  try{ const raw=localStorage.getItem(LS_KEY); if(raw){ const d=JSON.parse(raw); if(d && d.v===1){ state=Object.assign(state,d); return; } } }catch(e){}
+  try{ const raw=localStorage.getItem(LS_KEY); if(raw){ const d=JSON.parse(raw); if(d && d.v===1){ state=Object.assign(state,d); normalizeCategories(); return; } } }catch(e){}
   if(!state.categories.length){ state.categories = JSON.parse(JSON.stringify(PRESET_CATEGORIES)); }
   if(!state.tags.length){ state.tags = [{id:'tag_want',name:'想買'},{id:'tag_fav',name:'最愛'}]; }
+  normalizeCategories();
   saveLocal();
 }
 function saveLocal(){ state.updatedAt=Date.now(); try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }catch(e){ toast('⚠️ 本地儲存空間不足，圖片可能過多'); } }
@@ -448,7 +550,12 @@ function saveFBConfig(){ state.fbConfig ? localStorage.setItem(FB_KEY, JSON.stri
 async function initFirebase(){
   if(!state.fbConfig || !state.fbConfig.apiKey) return;
   try{
-    if(fb.app===null){ fb.app = firebase.initializeApp(state.fbConfig, 'warm'); }
+    if(fb.app===null){ 
+      fb.app = firebase.initializeApp(state.fbConfig, 'warm'); 
+      if(typeof firebase.analytics === 'function' && state.fbConfig.measurementId) {
+        firebase.analytics(fb.app);
+      }
+    }
     fb.db = firebase.firestore(fb.app);
     fb.ready = true;
     updateSyncUI();
@@ -459,14 +566,26 @@ async function initFirebase(){
 async function testFirebase(){
   if(!state.fbConfig || !state.fbConfig.apiKey){ toast('請先填寫 Firebase 設定'); return; }
   try{
-    if(fb.app===null){ fb.app = firebase.initializeApp(state.fbConfig, 'warm'); }
+    if(fb.app===null){ 
+      fb.app = firebase.initializeApp(state.fbConfig, 'warm'); 
+      if(typeof firebase.analytics === 'function' && state.fbConfig.measurementId) {
+        firebase.analytics(fb.app);
+      }
+    }
     fb.db = firebase.firestore(fb.app);
     const snap = await fb.db.collection('warm_storage').doc('main').get();
     fb.ready = true; updateSyncUI();
     toast('✅ Firebase 連線成功');
     startRealtime();
     await pullFromCloud(false);
-  }catch(e){ console.error(e); fb.ready=false; updateSyncUI(); toast('❌ 連線失敗：'+ (e.message||'請檢查設定')); }
+  }catch(e){ 
+    console.error(e); fb.ready=false; updateSyncUI(); 
+    let msg = e.message||'請檢查設定';
+    if(e.code === 'permission-denied' || msg.includes('Missing or insufficient permissions')){
+      msg = '權限不足，請修改 Firestore 安全規則 (設為 true)';
+    }
+    toast('❌ 連線失敗：'+ msg); 
+  }
 }
 function updateSyncUI(){
   const pill=document.getElementById('syncPill'); const txt=document.getElementById('syncText');
@@ -482,7 +601,12 @@ async function cloudPush(){
     const data = { json: JSON.stringify(state), updatedAt: Date.now() };
     await cloudDocRef().set(data);
     fb.lastSync=Date.now(); updateSyncUI();
-  }catch(e){ console.error('push fail',e); }
+  }catch(e){ 
+    console.error('push fail',e); 
+    if(e.code === 'permission-denied' || String(e.message).includes('permissions')){
+      toast('❌ 上傳失敗：權限不足，請至 Firebase 修改規則');
+    }
+  }
 }
 async function pullFromCloud(silent){
   if(!fb.ready) return;
@@ -502,7 +626,12 @@ async function pullFromCloud(silent){
       await cloudPush(); // 首次上傳
     }
     updateSyncUI(); renderAll();
-  }catch(e){ console.error('pull fail',e); }
+  }catch(e){ 
+    console.error('pull fail',e); 
+    if(e.code === 'permission-denied' || String(e.message).includes('permissions')){
+      if(!silent) toast('❌ 下載失敗：權限不足，請至 Firebase 修改規則');
+    }
+  }
 }
 function startRealtime(){
   if(!fb.ready || fb.listening) return;
@@ -538,6 +667,7 @@ function router(){
   batchMode=false; batchSel.clear();
   if(parts[0]==='cat'){ currentCatId=parts[1]; showView('view-cat'); renderCatList(); }
   else if(parts[0]==='item'){ currentItemId=parts[1]; showView('view-detail'); renderDetail(); }
+  else if(parts[0]==='expiry'){ showView('view-expiry'); renderExpiry(); }
   else if(parts[0]==='manage'){ showView('view-manage'); renderManage(); }
   else if(parts[0]==='tags'){ showView('view-tags'); renderTags(); }
   else if(parts[0]==='stats'){ showView('view-stats'); renderStats(); }
@@ -551,7 +681,8 @@ function showView(id){
 }
 function syncNav(){
   let key='home';
-  if(location.hash.startsWith('#cat')) key='manage';
+  if(location.hash.startsWith('#expiry')) key='expiry';
+  else if(location.hash.startsWith('#cat')) key='manage';
   else if(location.hash.startsWith('#item')) key='manage';
   else if(location.hash.startsWith('#manage')) key='manage';
   else if(location.hash.startsWith('#tags')) key='tags';
@@ -569,15 +700,13 @@ function renderHome(){
   const el=document.getElementById('view-home');
   const totalItems = state.items.length;
   const totalSpendSum = state.items.reduce((s,i)=>s+totalSpend(i),0);
-  const lowCount = state.items.filter(i=>lowState(i)==='low'||lowState(i)==='none').length;
+  const expiryItems = state.items.map(getExpiryInfo).filter(Boolean);
+  const urgentExp = expiryItems.filter(e=>e.status!=='ok').length;
   const catCount = state.categories.length;
   const catCards = [...state.categories].map(c=>{
     const items = state.items.filter(i=>i.categoryId===c.id);
-    const low = items.filter(i=>lowState(i)==='low').length;
-    const none = items.filter(i=>lowState(i)==='none').length;
     return `<div class="cat-card" data-id="${c.id}" onclick="openCat('${c.id}')" title="點擊進入">
       <div class="count-badge">${items.length} 件</div>
-      ${(low+none)>0?`<div class="low">⚠️ ${low+none} 件需補貨</div>`:''}
       <div class="ico" style="background:${c.color}22">${c.icon}</div>
       <h3>${esc(c.name)}</h3>
       <div class="meta">${items.length>0?`共 ${items.reduce((s,i)=>s+Math.max(0,qtyOf(i)),0)} ${esc(c.defaultUnit||'件')}`:'尚無物品'}</div>
@@ -589,7 +718,13 @@ function renderHome(){
       <div class="stat-card"><span class="em">📦</span><div class="v">${totalItems}</div><div class="l">物品總數</div></div>
       <div class="stat-card"><span class="em">💰</span><div class="v">$${totalSpendSum.toLocaleString()}</div><div class="l">總花費</div></div>
       <div class="stat-card"><span class="em">🗂️</span><div class="v">${catCount}</div><div class="l">品類數</div></div>
-      <div class="stat-card" style="cursor:pointer" onclick="navigate('#/stats')"><span class="em">⚠️</span><div class="v">${lowCount}</div><div class="l">需補貨提醒</div></div>
+      <div class="stat-card" style="cursor:pointer" onclick="navigate('#/expiry')"><span class="em">⏰</span><div class="v">${urgentExp}</div><div class="l">到期提醒</div></div>
+    </div>
+    <div class="exp-zone-hero" onclick="navigate('#/expiry')" style="cursor:pointer">
+      <div class="big">⏰</div>
+      <div style="flex:1"><b style="font-size:16px">集齊品／到期專區</b>
+        <div style="font-size:13px;color:var(--text-light);margin-top:2px">管理有到期日的物品（化妝品、保養品），${urgentExp>0?`<b style="color:var(--danger)">${urgentExp} 件已到期或即將到期</b>`:'目前沒有需要處理的到期物品'}　→</div>
+      </div>
     </div>
     <div class="sec-title"><h2>我的收藏</h2><span class="sub">長按可拖拽排序</span></div>
     <div class="cat-grid" id="homeCatGrid">${catCards}</div>`;
@@ -629,30 +764,14 @@ function renderCatList(){
     });
   }
   if(filterState.tag){ items = items.filter(i=>(i.tags||[]).includes(filterState.tag)); }
-  if(filterState.stock==='low') items = items.filter(i=>lowState(i)==='low');
-  else if(filterState.stock==='none') items = items.filter(i=>lowState(i)==='none');
-  else if(filterState.stock==='ok') items = items.filter(i=>lowState(i)==='ok');
 
   const isCustomSort = sortModes['cat:'+cat.id]===true;
   if(!isCustomSort){
-    items = [...items].sort((a,b)=>{
-      const c = getCat(a.categoryId); if(c && c.id==='cat_yarn') return 0;
-      return 0;
-    });
-    // 預設排序：低庫存優先 → 時間新在前
-    items.sort((a,b)=>{
-      const la=lowState(a), lb=lowState(b);
-      const rank={none:0,low:1,ok:2};
-      if(rank[la]!==rank[lb]) return rank[la]-rank[lb];
-      return (num(b.createdAt||0))-(num(a.createdAt||0));
-    });
+    // 預設排序：時間新在前
+    items = [...items].sort((a,b)=> (num(b.createdAt||0))-(num(a.createdAt||0)));
   }
 
   const tagOpts = state.tags.map(t=>`<option value="${esc(t.name)}" ${filterState.tag===t.name?'selected':''}>${esc(t.name)}</option>`).join('');
-  const stockOpts = ['ok','low','none'].map(s=>{
-    const lb={ok:'有庫存',low:'低庫存',none:'無庫存'}[s];
-    return `<option value="${s}" ${filterState.stock===s?'selected':''}>${lb}</option>`;
-  }).join('');
 
   el.innerHTML = `
     <button class="back-btn" onclick="navigate('#/home')">← 返回</button>
@@ -667,7 +786,6 @@ function renderCatList(){
     <div class="filter-bar">
       <input placeholder="搜尋此品類…" value="${esc(filterState.q)}" oninput="filterState.q=this.value;renderCatList()" style="padding:8px 12px;border-radius:24px;border:1.5px solid var(--line);background:var(--card);outline:none;flex:1;min-width:140px">
       <select onchange="filterState.tag=this.value;renderCatList()"><option value="">全部標籤</option>${tagOpts}</select>
-      <select onchange="filterState.stock=this.value;renderCatList()"><option value="">庫存狀態</option>${stockOpts}</select>
     </div>
     ${items.length===0?`<div style="text-align:center;color:var(--text-light);padding:50px 0;">沒有符合的物品</div>`:''}
     <div class="item-grid ${batchMode?'batch-mode':''}" id="catItemGrid">
@@ -698,25 +816,27 @@ function renderCatList(){
 function getItemFieldText(item){
   const c=getCat(item.categoryId);
   const parts=[item.name, item.store||'', item.platform||'', (item.tags||[]).join(' ')];
-  if(c){ c.customFields.forEach(f=>{ if(item.custom && item.custom[f.key]) parts.push(item.custom[f.key]); }); }
+  if(c){ c.customFields.forEach(f=>{ const v=item.custom?item.custom[f.id]:''; if(v) parts.push(v); }); }
   if(item.yarnBrand) parts.push(item.yarnBrand);
   return parts.join(' ');
 }
 function toggleCustomSort(catId, on){ sortModes['cat:'+catId]=on; renderCatList(); if(on) toast('已開啟自訂排序，長按拖拽調整順序'); }
 function itemCardHTML(i, customMode){
   const mainImg = (i.images||[]).find(im=>im.isMain) || (i.images||[])[0];
-  const st = lowState(i);
   const q = qtyOf(i);
-  const stCls = st==='low'?'low':(st==='none'?'none':'');
   const unit = i.unit || (getCat(i.categoryId)||{}).defaultUnit || '';
   const tags=(i.tags||[]).map(t=>`<span class="tag-chip">${esc(t)}</span>`).join('');
+  const title=itemTitle(i);
+  const exp=getExpiryInfo(i);
+  const expBadge = exp?`<div class="exp-badge ${exp.status}" style="position:absolute;top:44px;left:8px">${exp.status==='expired'?'已到期':exp.status==='soon'?`剩 ${exp.diffDays} 天`:'⏰'}</div>`:'';
   const mv = customMode?`<div class="mv-btns" onclick="event.stopPropagation()"><button class="btn soft sm" onclick="moveItem('${i.id}',-1)">↑</button><button class="btn soft sm" onclick="moveItem('${i.id}',1)">↓</button></div>`:'';
   return `<div class="item-card" data-id="${i.id}" onclick="openItem('${i.id}')">
     ${batchMode?`<input type="checkbox" class="ck" ${batchSel.has(i.id)?'checked':''} onclick="event.stopPropagation();toggleBatchSel('${i.id}')">`:''}
     ${mv}
     ${mainImg?`<img class="item-thumb" src="${mainImg.dataUrl}" alt="">`:`<div class="item-thumb noimg">${(getCat(i.categoryId)||{}).icon||'📦'}</div>`}
-    <span class="qty ${stCls}">${q} ${esc(unit)}</span>
-    <h4>${esc(i.name)}</h4>
+    ${expBadge}
+    <span class="qty">${q} ${esc(unit)}</span>
+    <h4>${esc(title)}</h4>
     <div class="meta">${esc(getCat(i.categoryId)?.name||'')}${i.store?' · '+esc(i.store):''}</div>
     ${tags?`<div class="tags">${tags}</div>`:''}
   </div>`;
@@ -783,7 +903,22 @@ function renderDetail(){
   const addKV=(k,v)=>{ if(v!=='' && v!=null && v!==undefined) kv+=`<div class="kv"><div class="k">${k}</div><div class="v">${v}</div></div>`; };
   addKV('品類', cat?`${cat.icon} ${esc(cat.name)}`:'');
   addKV('建檔數量', `${num(item.initialQty||0)} ${esc(item.unit||cat?.defaultUnit||'')}`);
-  if(cat){ cat.customFields.forEach(f=>{ if(item.custom && item.custom[f.key]!=='' && item.custom[f.key]!=null) addKV(esc(f.key), esc(item.custom[f.key])); }); }
+  if(cat){ cat.customFields.forEach(f=>{
+    const val = item.custom ? item.custom[f.id] : undefined;
+    if(val===undefined || val===null || String(val)==='') return;
+    if(f.type==='image'){
+      addKV(esc(f.name), `<img src="${esc(val)}" style="width:60px;height:60px;object-fit:cover;border-radius:12px;border:1.5px solid var(--line)" onerror="this.style.display='none'">`);
+    } else if(f.type==='link'){
+      addKV(esc(f.name), `<a class="link-btn" href="#" onclick="window.open('${esc(val)}','_blank','noopener');return false;">↗ ${esc(val)}</a>`);
+    } else if(f.type==='date'){
+      const d=new Date(String(val));
+      const disp = isNaN(d)? esc(val) : fmtDate(val);
+      const exp = f.isExpiry ? getExpiryInfo(item) : null;
+      addKV(esc(f.name), disp + (exp?` <span class="exp-badge ${exp.status}">${exp.status==='expired'?'已到期':exp.status==='soon'?`剩 ${exp.diffDays} 天`:'未到期'}</span>`:''));
+    } else {
+      addKV(esc(f.name), esc(val));
+    }
+  }); }
   if(item.platform) addKV('購買平台', esc(item.platform));
   if(item.buyTime) addKV('購買時間', fmtDate(item.buyTime));
   if(item.price!=null && item.price!=='') addKV('購買單價', '$'+num(item.price));
@@ -807,7 +942,7 @@ function renderDetail(){
       </div>
       <div class="detail-body">
         <div class="detail-cat">${cat?esc(cat.name):''}</div>
-        <h2>${esc(item.name)}</h2>
+        <h2>${esc(itemTitle(item))}</h2>
         <div class="qty-box">📦 目前庫存：${q} ${esc(item.unit||cat?.defaultUnit||'')}　·　建檔 ${num(item.initialQty||0)} ＋入 ${inSum} −出 ${outSum}</div>
         <div class="kv-grid">${kv}</div>
         <div class="action-row">
@@ -888,23 +1023,39 @@ function openItemForm(id, catId){
   showModal('modalItem', itemFormHTML(item, cat));
   initItemForm();
 }
+function cfInputHTML(f, val){
+  val = (val===undefined||val===null)? '' : val;
+  switch(f.type){
+    case 'number':
+      return `<input type="number" step="any" data-cf="${esc(f.id)}" value="${esc(val)}" placeholder="請輸入${esc(f.name)}">`;
+    case 'select': {
+      const opts=(f.options||[]).map(o=>`<option value="${esc(o)}" ${val===o?'selected':''}>${esc(o)}</option>`).join('');
+      return `<select data-cf="${esc(f.id)}"><option value="">請選擇…</option>${opts}</select>`;
+    }
+    case 'date':
+      return `<input type="date" data-cf="${esc(f.id)}" value="${esc(val)}">`;
+    case 'link':
+      return `<input type="url" data-cf="${esc(f.id)}" value="${esc(val)}" placeholder="https://…">`;
+    case 'image':
+      return `<div class="cf-img"><input type="url" data-cf="${esc(f.id)}" value="${esc(val)}" placeholder="https://圖片網址…" oninput="this.nextElementSibling.src=this.value;this.nextElementSibling.style.display=this.value?'block':'none'">${val?`<img src="${esc(val)}" onerror="this.style.display='none'">`:''}</div>`;
+    default:
+      return `<input data-cf="${esc(f.id)}" value="${esc(val)}" placeholder="請輸入${esc(f.name)}">`;
+  }
+}
 function itemFormHTML(item, cat){
   const isNew = !item;
   const catOpts = state.categories.map(c=>`<option value="${c.id}" ${c.id===(cat?cat.id:'')?'selected':''}>${c.icon} ${esc(c.name)}</option>`).join('');
   const platformOpts = PLATFORMS.map(p=>`<option ${item&&item.platform===p?'selected':''}>${p}</option>`).join('');
   const customHTML = cat ? cat.customFields.map(f=>{
-    const val = item&&item.custom? (item.custom[f.key]||'') : '';
-    if(f.type==='select'){
-      const opts=f.options.map(o=>`<option value="${o}" ${val===o?'selected':''}>${o}</option>`).join('');
-      return `<div class="form-row"><label>${esc(f.key)}</label><select data-cf="${esc(f.key)}">${opts}</select></div>`;
-    }
-    return `<div class="form-row"><label>${esc(f.key)}</label><input data-cf="${esc(f.key)}" value="${esc(val)}" placeholder="請輸入${esc(f.key)}"></div>`;
+    const val = item&&item.custom? item.custom[f.id] : '';
+    const reqMark = f.isExpiry?'<span style="color:var(--danger)">（到期）</span>':'';
+    return `<div class="form-row"><label>${esc(f.name)} ${reqMark}</label>${cfInputHTML(f, val)}</div>`;
   }).join('') : '';
 
   return `
     <h3>${isNew?'新增物品':'編輯物品'}${cat?` · ${cat.icon} ${esc(cat.name)}`:''}</h3>
     <div class="form-section">通用欄位</div>
-    <div class="form-row"><label>名稱 <span class="req">*</span></label><input id="f_name" value="${esc(item?item.name:'')}" placeholder="例如：牛奶棉 淡黃色"></div>
+    <div class="form-row"><label>名稱 <span style="color:var(--text-light);font-size:12px">（選填，留空將以品類關鍵欄位顯示）</span></label><input id="f_name" value="${esc(item?item.name:'')}" placeholder="可留空"></div>
     ${isNew?`<div class="form-row"><label>品類</label><select id="f_cat" onchange="onFormCatChange(this.value)">${catOpts}</select></div>`:''}
     <div class="form-row"><label>圖片（可多張，長按拖拽排序，點「主圖」設為主圖）</label>
       <div class="img-upload" id="imgList"></div>
@@ -1003,7 +1154,6 @@ function onImgFiles(input){
 }
 function saveItemForm(){
   const name=document.getElementById('f_name').value.trim();
-  if(!name){ toast('請填寫名稱'); return; }
   const catId = document.getElementById('f_cat') ? document.getElementById('f_cat').value : (getItem(editingItemId)?.categoryId);
   const custom={};
   document.querySelectorAll('#modalItem [data-cf]').forEach(inp=>{ custom[inp.dataset.cf]=inp.value; });
@@ -1097,11 +1247,12 @@ function renderManage(){
   const editMode = sortModes['manage']===true;
   const cards = [...state.categories].map(c=>{
     const items=state.items.filter(i=>i.categoryId===c.id);
-    const cf=c.customFields.map(f=>esc(f.key)).join('、');
+    const cf=c.customFields.map(f=>esc(f.name)).join('、');
+    const tf=c.customFields.find(f=>f.id===c.titleField);
     return `<div class="row-item cat-mng" data-id="${c.id}">
       <span class="sort-handle" title="拖拽排序">⋮⋮</span>
       <div class="thumb" style="background:${c.color}22;display:flex;align-items:center;justify-content:center;font-size:26px">${c.icon}</div>
-      <div class="info"><b>${esc(c.name)}</b><span>${items.length} 件 · 單位：${esc(c.defaultUnit||'—')} · 低量：${c.lowStock}${cf?' · 欄位：'+cf:''}</span></div>
+      <div class="info"><b>${esc(c.name)}</b><span>${items.length} 件 · 單位：${esc(c.defaultUnit||'—')}${tf?' · 標題欄位：'+esc(tf.name):''}${cf?' · 欄位：'+cf:''}</span></div>
       ${editMode?`<div class="mng-arrows"><button class="btn soft sm" onclick="moveCat('${c.id}',-1)" title="上移">↑</button><button class="btn soft sm" onclick="moveCat('${c.id}',1)" title="下移">↓</button></div>`:''}
       <button class="btn soft sm" onclick="openCatForm('${c.id}')">✏️</button>
       <button class="btn danger sm" onclick="deleteCat('${c.id}')">🗑</button>
@@ -1142,9 +1293,46 @@ function moveCat(id, dir){
   saveState(); renderManage(); toast('✅ 順序已調整並同步');
 }
 let editingCatId=null;
+let draftCf=[];   // 品類編輯中的欄位草稿 [{id,name,type,options,isExpiry}]
+function renderCfEditor(){
+  const box=document.getElementById('cfEditor'); if(!box) return;
+  box.innerHTML = draftCf.map((f,i)=>`
+    <div class="cf-row">
+      <div class="cf-head">
+        <span class="sort-handle" title="拖拽排序">⋮⋮</span>
+        <input class="cf-name" value="${esc(f.name)}" oninput="draftCf[${i}].name=this.value" placeholder="欄位名稱">
+        <select class="cf-type" onchange="draftCfType(${i},this.value)">${FIELD_TYPES.map(t=>`<option value="${t.v}" ${f.type===t.v?'selected':''}>${t.n}</option>`).join('')}</select>
+        <button class="cf-mini" onclick="draftCfUp(${i})" title="上移">↑</button>
+        <button class="cf-mini" onclick="draftCfDown(${i})" title="下移">↓</button>
+        <button class="cf-mini danger" onclick="draftCfDel(${i})" title="刪除欄位">✕</button>
+      </div>
+      ${f.type==='select'?`<div class="cf-sub">選項（用逗號分隔）<input type="text" value="${esc((f.options||[]).join(','))}" oninput="draftCf[${i}].options=this.value.split(/[,，]/).map(s=>s.trim()).filter(Boolean)"></div>`:''}
+      ${f.type==='date'?`<div class="cf-sub"><label><input type="checkbox" ${f.isExpiry?'checked':''} onchange="draftCf[${i}].isExpiry=this.checked">此欄位為「到期日」→ 用於到期專區提醒</label></div>`:''}
+    </div>`).join('') || '<div style="color:var(--text-light);text-align:center;padding:14px">尚未新增欄位</div>';
+  // 標題欄位下拉
+  const tfSel=document.getElementById('c_titleField');
+  if(tfSel){
+    const selVal=tfSel.dataset.val;
+    tfSel.innerHTML = `<option value="">（不指定）</option>` + draftCf.map((f,i)=>`<option value="${esc(f.id)}" ${f.id===selVal?'selected':''}>${esc(f.name||'未命名')}</option>`).join('');
+  }
+}
+function draftCfAdd(){
+  draftCf.push({id:uid(), name:'', type:'text', options:[], isExpiry:false});
+  renderCfEditor();
+}
+function draftCfDel(i){ draftCf.splice(i,1); renderCfEditor(); }
+function draftCfUp(i){ if(i<=0) return; [draftCf[i-1],draftCf[i]]=[draftCf[i],draftCf[i-1]]; renderCfEditor(); }
+function draftCfDown(i){ if(i>=draftCf.length-1) return; [draftCf[i],draftCf[i+1]]=[draftCf[i+1],draftCf[i]]; renderCfEditor(); }
+function draftCfType(i,v){
+  draftCf[i].type=v;
+  if(v!=='select') draftCf[i].options= draftCf[i].options||[];
+  if(v!=='date') draftCf[i].isExpiry=false;
+  renderCfEditor();
+}
 function openCatForm(id){
   editingCatId=id;
   const c=id?getCat(id):null;
+  draftCf = c ? (c.customFields||[]).map(f=>({id:f.id, name:f.name, type:f.type, options:(f.options||[]).slice(), isExpiry:!!f.isExpiry})) : [];
   showModal('modalCat', `
     <h3>${id?'編輯品類':'新增品類'}</h3>
     <div class="form-row"><label>品類名稱 <span class="req">*</span></label><input id="c_name" value="${esc(c?c.name:'')}" placeholder="例如：串珠"></div>
@@ -1154,21 +1342,24 @@ function openCatForm(id){
     </div>
     <div class="form-grid">
       <div class="form-row"><label>預設單位</label><input id="c_unit" value="${esc(c?c.defaultUnit:'')}" placeholder="團"></div>
-      <div class="form-row"><label>低庫存提醒值</label><input id="c_low" type="number" min="0" value="${c?c.lowStock:state.lowStockDefault}"></div>
+      <div class="form-row"><label>名稱留空時顯示的欄位</label><select id="c_titleField" data-val="${esc(c?c.titleField:'')}"></select></div>
     </div>
-    <div class="form-row"><label>自訂專屬欄位（一行一個，格式：欄位名稱）</label>
-      <textarea id="c_fields" placeholder="例如：${id?c?c.customFields.map(f=>f.key).join('\n'):'':''}IP&#10;尺寸&#10;是否絕版">${c?(c.customFields||[]).map(f=>f.key).join('\n'):''}</textarea>
+    <div class="form-row"><label style="display:flex;align-items:center;justify-content:space-between;width:100%">✏️ 自訂專屬欄位（每個品類獨立，可新增／刪除／改名／排序／選型別）<span style="font-size:11.5px;color:var(--text-light)">型別：文字·數字·選擇·日期·圖片·連結</span></label>
+      <div class="cf-editor" id="cfEditor"></div>
+      <button class="cf-add" onclick="draftCfAdd()">＋ 新增欄位</button>
     </div>
     <div class="btn-row"><button class="btn ghost" onclick="closeModal('modalCat')">取消</button><button class="btn primary" onclick="saveCatForm()">💾 儲存</button></div>`);
+  renderCfEditor();
 }
 function saveCatForm(){
   const name=document.getElementById('c_name').value.trim();
   if(!name){ toast('請填寫品類名稱'); return; }
-  const keys=document.getElementById('c_fields').value.split('\n').map(s=>s.trim()).filter(Boolean);
-  const customFields=keys.map(k=>({key:k,type:'text'}));
+  const customFields=draftCf.map((f,i)=>({id:f.id||uid(), name:String(f.name||'').trim()||('欄位'+(i+1)), type:f.type, options:(f.options||[]).slice(), isExpiry:!!f.isExpiry}));
+  let titleField=document.getElementById('c_titleField').value;
+  if(titleField && !customFields.some(f=>f.id===titleField)) titleField='';
+  if(!titleField) titleField = customFields[0]?customFields[0].id:'';
   const data={ name, icon:document.getElementById('c_icon').value.trim()||'📦', color:document.getElementById('c_color').value.trim()||'#F7B32B',
-    defaultUnit:document.getElementById('c_unit').value.trim(), lowStock:num(document.getElementById('c_low').value),
-    customFields };
+    defaultUnit:document.getElementById('c_unit').value.trim(), titleField, customFields };
   if(editingCatId){
     state.categories=state.categories.map(c=>c.id===editingCatId? Object.assign({},c,data):c);
     toast('✅ 已儲存');
@@ -1234,8 +1425,9 @@ function renderStats(){
   const total=counts.reduce((a,b)=>a+b,0)||1;
   const spend=cats.map(c=>state.items.filter(i=>i.categoryId===c.id).reduce((s,i)=>s+totalSpend(i),0));
   const totalSpendSum=spend.reduce((a,b)=>a+b,0);
-  const lowItems=state.items.filter(i=>lowState(i)==='low'||lowState(i)==='none');
-  const recentRecs = state.items.flatMap(i=>(i.stockRecords||[]).map(r=>Object.assign({itemName:i.name,cat:i.categoryId},r)))
+  const expItems=state.items.map(getExpiryInfo).filter(Boolean);
+  const urgentExp=expItems.filter(e=>e.status!=='ok').length;
+  const recentRecs = state.items.flatMap(i=>(i.stockRecords||[]).map(r=>Object.assign({itemName:itemTitle(i),cat:i.categoryId},r)))
     .sort((a,b)=>num(b.time)-num(a.time)).slice(0,8);
 
   // 環形圖（最多4色，其餘合併）
@@ -1264,7 +1456,7 @@ function renderStats(){
     <div class="stat-grid">
       <div class="stat-card"><span class="em">📦</span><div class="v">${state.items.length}</div><div class="l">物品總數</div></div>
       <div class="stat-card"><span class="em">💰</span><div class="v">$${totalSpendSum.toLocaleString()}</div><div class="l">總花費</div></div>
-      <div class="stat-card"><span class="em">⚠️</span><div class="v">${lowItems.length}</div><div class="l">需補貨</div></div>
+      <div class="stat-card" style="cursor:pointer" onclick="navigate('#/expiry')"><span class="em">⏰</span><div class="v">${urgentExp}</div><div class="l">到期提醒</div></div>
       <div class="stat-card"><span class="em">🧾</span><div class="v">${state.items.reduce((s,i)=>s+(i.stockRecords||[]).length,0)}</div><div class="l">流水筆數</div></div>
     </div>
     <div class="stats-wrap">
@@ -1286,6 +1478,41 @@ function renderStats(){
     </div>`;
 }
 
+/* ---------- 到期專區 ---------- */
+function renderExpiry(){
+  const el=document.getElementById('view-expiry');
+  const list=state.items.map(getExpiryInfo).filter(Boolean);
+  list.sort((a,b)=>a.date-b.date);
+  const expired=list.filter(e=>e.status==='expired');
+  const soon=list.filter(e=>e.status==='soon');
+  const ok=list.filter(e=>e.status==='ok');
+  const row=(e)=>{
+    const item=getItem(e.item.id); const c=getCat(item.categoryId);
+    const img=(item.images||[]).find(im=>im.isMain)||(item.images||[])[0];
+    const badge = e.status==='expired'?`<span class="exp-badge expired">已到期 ${Math.abs(e.diffDays)} 天</span>`
+      : e.status==='soon'?`<span class="exp-badge soon">剩 ${e.diffDays} 天</span>`
+      : `<span class="exp-badge ok">未到期</span>`;
+    return `<div class="row-item" style="cursor:pointer" onclick="openItem('${item.id}')">
+      <div class="thumb" style="display:flex;align-items:center;justify-content:center;font-size:22px;background:${c?c.color:'#eee'}22;overflow:hidden">${img?`<img src="${img.dataUrl}" style="width:100%;height:100%;object-fit:cover">`:c?c.icon:'📦'}</div>
+      <div class="info"><b>${esc(itemTitle(item))}</b><span>${c?esc(c.name):''} · ${fmtDate(e.date.getTime())} · ${badge}</span></div>
+    </div>`;
+  };
+  const grp=(t,arr)=>arr.length?`<div class="sec-title" style="margin-top:6px"><h2>${t}（${arr.length}）</h2></div><div class="row-list">${arr.map(row).join('')}</div>`:'';
+  el.innerHTML = `
+    <div class="sec-title"><h2>⏰ 集齊品／到期專區</h2><span class="sub">只顯示有填到期日的物品</span></div>
+    <div class="exp-zone-hero">
+      <div class="big">🧴</div>
+      <div style="flex:1"><b style="font-size:16px">到期管理</b>
+        <div style="font-size:13px;color:var(--text-light);margin-top:2px">已到期 ${expired.length} 件 · 即將到期 ${soon.length} 件 · 未到期 ${ok.length} 件</div>
+      </div>
+    </div>
+    ${grp('⚠️ 已到期', expired)}
+    ${grp('🔥 即將到期（30 天內）', soon)}
+    ${grp('✅ 未到期', ok)}
+    ${list.length?'':'<div style="text-align:center;color:var(--text-light);padding:60px 0"><div style="font-size:44px;margin-bottom:10px">🧴</div>到期專區目前沒有物品<br><span style="font-size:13px">在品類編輯中將某個「日期」欄位設為到期日，並於物品中填寫到期日，就會出現在這裡</span></div>'}
+  `;
+}
+
 /* ---------- 設定 ---------- */
 function renderSettings(){
   const el=document.getElementById('view-settings');
@@ -1299,20 +1526,28 @@ function renderSettings(){
       <h3>☁️ Firebase 私有雲端綁定</h3>
       <div class="desc">填入你的 Firebase 專案設定（Console → 專案設定 → 一般），資料將儲存在你自己的雲端，手機／平板／電腦多端即時同步。資料隔離由你的 Firebase 規則把關。</div>
       <div class="form-grid">
-        <div class="form-row"><label>apiKey</label><input id="fb_apikey" value="${esc(cfg?cfg.apiKey:'')}" placeholder="AIza…"></div>
-        <div class="form-row"><label>authDomain</label><input id="fb_auth" value="${esc(cfg?cfg.authDomain:'')}" placeholder="xxx.firebaseapp.com"></div>
-        <div class="form-row"><label>projectId</label><input id="fb_project" value="${esc(cfg?cfg.projectId:'')}" placeholder="warm-storage-xxx"></div>
-        <div class="form-row"><label>storageBucket</label><input id="fb_bucket" value="${esc(cfg?cfg.storageBucket:'')}" placeholder="xxx.appspot.com"></div>
-        <div class="form-row"><label>messagingSenderId</label><input id="fb_sender" value="${esc(cfg?cfg.messagingSenderId:'')}"></div>
-        <div class="form-row"><label>appId</label><input id="fb_appid" value="${esc(cfg?cfg.appId:'')}" placeholder="1:xxx:web:xxx"></div>
+        <div class="form-row"><label>apiKey</label><input id="fb_apikey" value="${esc(cfg?cfg.apiKey:DEFAULT_FB_CONFIG.apiKey)}" placeholder="AIza…"></div>
+        <div class="form-row"><label>authDomain</label><input id="fb_auth" value="${esc(cfg?cfg.authDomain:DEFAULT_FB_CONFIG.authDomain)}" placeholder="xxx.firebaseapp.com"></div>
+        <div class="form-row"><label>projectId</label><input id="fb_project" value="${esc(cfg?cfg.projectId:DEFAULT_FB_CONFIG.projectId)}" placeholder="warm-storage-xxx"></div>
+        <div class="form-row"><label>storageBucket</label><input id="fb_bucket" value="${esc(cfg?cfg.storageBucket:DEFAULT_FB_CONFIG.storageBucket)}" placeholder="xxx.appspot.com"></div>
+        <div class="form-row"><label>messagingSenderId</label><input id="fb_sender" value="${esc(cfg?cfg.messagingSenderId:DEFAULT_FB_CONFIG.messagingSenderId)}"></div>
+        <div class="form-row"><label>appId</label><input id="fb_appid" value="${esc(cfg?cfg.appId:DEFAULT_FB_CONFIG.appId)}" placeholder="1:xxx:web:xxx"></div>
+        <div class="form-row"><label>measurementId (選填)</label><input id="fb_measurement" value="${esc(cfg?cfg.measurementId:(DEFAULT_FB_CONFIG.measurementId||''))}" placeholder="G-XXX..."></div>
       </div>
       <div class="row">
         <button class="btn primary" onclick="saveFirebaseCfg()">💾 儲存並連線</button>
         <button class="btn soft" onclick="syncNow()">🔄 立即同步</button>
         <button class="btn danger" onclick="unbindFirebase()">解除綁定</button>
       </div>
-      <div style="margin-top:14px" id="fbStatus" class="cloud-status ${cl}">${fb.ready?'✅ 已連線，資料即時同步中':(cfg?'⚠️ 尚未連線，請點「儲存並連線」':'🔌 尚未綁定 Firebase')}</div>
-      <div class="desc" style="margin-top:10px">🔐 建議 Firebase 規則：僅允許已登入本人讀寫（文件「Rules 建議」欄位提供）。</div>
+      <div style="margin-top:14px" id="fbStatus" class="cloud-status ${cl}">${fb.ready?'✅ 已連線，資料即時同步中':(cfg?'⚠️ 尚未連線，請點「儲存並連線」':'🔌 尚未綁定 Firebase（欄位已帶入預設，可直接儲存並連線）')}</div>
+      <div class="desc" style="margin-top:10px">🔐 Firestore 規則建議（本 APP 使用 <b>warm_storage/main</b> 文件）：因為沒有登入系統，請至 Firebase 控制台將規則設為以下內容以允許讀寫：<pre style="white-space:pre-wrap;background:var(--card2);padding:10px;border-radius:10px;font-size:12px;line-height:1.6">rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /warm_storage/{doc} {
+      allow read, write: if true; // ⚠️ 允許直接讀寫
+    }
+  }
+}</pre></div>
     </div>
 
     <div class="set-card">
@@ -1339,13 +1574,8 @@ function renderSettings(){
     </div>
 
     <div class="set-card">
-      <h3>🔔 庫存提醒</h3>
-      <div class="desc">當物品庫存低於設定值時，首頁與列表會顯示補貨提醒。</div>
-      <div class="row">
-        <label style="font-size:13.5px">預設低庫存提醒值：</label>
-        <input id="lowDefault" type="number" min="0" value="${state.lowStockDefault}" style="width:90px;padding:9px 12px;border-radius:14px;border:1.5px solid var(--line);background:var(--card2)">
-        <button class="btn soft sm" onclick="saveLowDefault()">儲存</button>
-      </div>
+      <h3>⏰ 到期提醒</h3>
+      <div class="desc">在品類編輯中，把某個「日期」型別的欄位勾選為「到期日」，該品類有填到期日的物品就會出現在「到期專區」（如化妝品、保養品）。毛線、周邊、公仔不需到期，可不勾選。</div>
     </div>
 
     <div class="set-card">
@@ -1360,7 +1590,7 @@ function renderSettings(){
 service cloud.firestore {
   match /databases/{database}/documents {
     match /warm_storage/{doc} {
-      allow read, write: if request.auth != null;
+      allow read, write: if true;
     }
   }
 }</pre>
@@ -1373,16 +1603,16 @@ function saveFirebaseCfg(){
     projectId:document.getElementById('fb_project').value.trim(),
     storageBucket:document.getElementById('fb_bucket').value.trim(),
     messagingSenderId:document.getElementById('fb_sender').value.trim(),
-    appId:document.getElementById('fb_appid').value.trim()
+    appId:document.getElementById('fb_appid').value.trim(),
+    measurementId:document.getElementById('fb_measurement') ? document.getElementById('fb_measurement').value.trim() : ''
   };
   saveFBConfig();
   testFirebase();
 }
-function saveLowDefault(){ state.lowStockDefault=num(document.getElementById('lowDefault').value); saveState(); toast('✅ 已儲存'); }
 function clearAll(){
   if(!confirm('確定清除全部資料？此操作無法復原！')) return;
   if(!confirm('再次確認：所有物品、品類、流水都將刪除。')) return;
-  state={v:1,updatedAt:Date.now(),categories:[],tags:[],items:[],fbConfig:state.fbConfig,lowStockDefault:1};
+  state={v:1,updatedAt:Date.now(),categories:[],tags:[],items:[],fbConfig:state.fbConfig};
   saveLocal(); if(fb.ready) cloudDocRef().delete().catch(()=>{});
   toast('已清除'); navigate('#/home'); renderAll();
 }
@@ -1391,7 +1621,7 @@ function clearAll(){
 function downloadTemplate(){
   const wb=XLSX.utils.book_new();
   // 物品資料 sheet（包含各品類欄位並集）
-  const allKeys=[]; state.categories.forEach(c=>c.customFields.forEach(f=>{ if(!allKeys.includes(f.key)) allKeys.push(f.key); }));
+  const allKeys=[]; state.categories.forEach(c=>c.customFields.forEach(f=>{ if(!allKeys.includes(f.name)) allKeys.push(f.name); }));
   const common=['品類','名稱','建檔數量','單位','標籤','購買時間','購買平台','店鋪','購買連結','購買單價','實付總價','備註'];
   const headers=common.concat(allKeys);
   const row={};
@@ -1418,7 +1648,7 @@ function downloadTemplate(){
 function exportExcel(scope){
   const selCat = scope==='one' ? document.getElementById('expCatSel').value : null;
   const cats = selCat? [getCat(selCat)].filter(Boolean) : state.categories;
-  const allKeys=[]; cats.forEach(c=>c.customFields.forEach(f=>{ if(!allKeys.includes(f.key)) allKeys.push(f.key); }));
+  const allKeys=[]; cats.forEach(c=>c.customFields.forEach(f=>{ if(!allKeys.includes(f.name)) allKeys.push(f.name); }));
   const common=['品類','名稱','建檔數量','單位','標籤','購買時間','購買平台','店鋪','購買連結','購買單價','實付總價','備註'];
   const headers=common.concat(allKeys);
   const wb=XLSX.utils.book_new();
@@ -1428,10 +1658,10 @@ function exportExcel(scope){
     const c=getCat(i.categoryId);
     const r={};
     common.forEach(h=>r[h]='');
-    r['品類']=c?c.name:''; r['名稱']=i.name; r['建檔數量']=num(i.initialQty||0); r['單位']=i.unit||(c?c.defaultUnit:'');
+    r['品類']=c?c.name:''; r['名稱']=itemTitle(i); r['建檔數量']=num(i.initialQty||0); r['單位']=i.unit||(c?c.defaultUnit:'');
     r['標籤']=(i.tags||[]).join('、'); r['購買時間']=i.buyTime?fmtDate(i.buyTime):''; r['購買平台']=i.platform||''; r['店鋪']=i.store||'';
     r['購買連結']=i.buyLink||''; r['購買單價']=i.price!=null?i.price:''; r['實付總價']=i.totalPrice!=null?i.totalPrice:''; r['備註']=i.note||'';
-    allKeys.forEach(k=>{ r[k] = (i.custom&&i.custom[k]!=null)? i.custom[k] : ''; });
+    if(c) c.customFields.forEach(f=>{ const v=i.custom&&i.custom[f.id]; r[f.name]=(v!=null)?v:''; });
     rows.push(r);
   });
   const ws1=XLSX.utils.json_to_sheet(rows.length?rows:[{}],{header:headers});
@@ -1474,7 +1704,6 @@ function parseImport(wb){
     const catName=String(r['品類']||'').trim();
     if(!catName){ errs.push('缺少品類'); }
     const name=String(r['名稱']||'').trim();
-    if(!name){ errs.push('缺少名稱'); }
     if(r['建檔數量']!=='' && isNaN(parseFloat(r['建檔數量']))) errs.push('建檔數量需為數字');
     return {line,errs,row:r,catName,name};
   });
@@ -1502,9 +1731,9 @@ function confirmImport(){
     if(v.errs.length){ skipped++; return; }
     const r=v.row;
     let cat=getCatByName(v.catName);
-    if(!cat){ cat={id:uid(),name:v.catName,icon:'📦',color:'#F7B32B',defaultUnit:'',lowStock:state.lowStockDefault,customFields:[]}; state.categories.push(cat); }
+    if(!cat){ cat={id:uid(),name:v.catName,icon:'📦',color:'#F7B32B',defaultUnit:'',customFields:[]}; state.categories.push(cat); }
     const custom={};
-    cat.customFields.forEach(f=>{ if(r[f.key]!==''&&r[f.key]!=null) custom[f.key]=String(r[f.key]); });
+    cat.customFields.forEach(f=>{ const cell=r[f.name]; if(cell!==''&&cell!=null) custom[f.id]=String(cell); });
     const tags=String(r['標籤']||'').split(/[、,，]/).map(s=>s.trim()).filter(Boolean);
     tags.forEach(t=>{ if(!state.tags.some(x=>x.name===t)) state.tags.push({id:uid(),name:t}); });
     const item={ id:uid(), name:v.name, categoryId:cat.id, unit:String(r['單位']||'').trim()||cat.defaultUnit||'',
