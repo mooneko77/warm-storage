@@ -726,7 +726,7 @@ function renderHome(){
     </div>
     <div class="exp-zone-hero" onclick="navigate('#/expiry')" style="cursor:pointer">
       <div class="big">⏰</div>
-      <div style="flex:1"><b style="font-size:16px">集齊品／到期專區</b>
+      <div style="flex:1"><b style="font-size:16px">即期品／到期專區</b>
         <div style="font-size:13px;color:var(--text-light);margin-top:2px">管理有到期日的物品（化妝品、保養品），${urgentExp>0?`<b style="color:var(--danger)">${urgentExp} 件已到期或即將到期</b>`:'目前沒有需要處理的到期物品'}　→</div>
       </div>
     </div>
@@ -1503,7 +1503,7 @@ function renderExpiry(){
   };
   const grp=(t,arr)=>arr.length?`<div class="sec-title" style="margin-top:6px"><h2>${t}（${arr.length}）</h2></div><div class="row-list">${arr.map(row).join('')}</div>`:'';
   el.innerHTML = `
-    <div class="sec-title"><h2>⏰ 集齊品／到期專區</h2><span class="sub">只顯示有填到期日的物品</span></div>
+    <div class="sec-title"><h2>⏰ 即期品／到期專區</h2><span class="sub">只顯示有填到期日的物品</span></div>
     <div class="exp-zone-hero">
       <div class="big">🧴</div>
       <div style="flex:1"><b style="font-size:16px">到期管理</b>
