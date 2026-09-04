@@ -1525,21 +1525,25 @@ function renderSettings(){
     <div class="set-card">
       <h3>☁️ Firebase 私有雲端綁定</h3>
       <div class="desc">填入你的 Firebase 專案設定（Console → 專案設定 → 一般），資料將儲存在你自己的雲端，手機／平板／電腦多端即時同步。資料隔離由你的 Firebase 規則把關。</div>
+      <div class="form-row" style="margin-bottom: 18px; padding: 12px; background: var(--bg2); border-radius: 12px;">
+        <label style="color: var(--primary-deep)">🔑 快速通關（免手動輸入）</label>
+        <input id="fb_magic" placeholder="輸入通關密碼" oninput="checkMagicCode(this.value)">
+      </div>
       <div class="form-grid">
-        <div class="form-row"><label>apiKey</label><input id="fb_apikey" value="${esc(cfg?cfg.apiKey:DEFAULT_FB_CONFIG.apiKey)}" placeholder="AIza…"></div>
-        <div class="form-row"><label>authDomain</label><input id="fb_auth" value="${esc(cfg?cfg.authDomain:DEFAULT_FB_CONFIG.authDomain)}" placeholder="xxx.firebaseapp.com"></div>
-        <div class="form-row"><label>projectId</label><input id="fb_project" value="${esc(cfg?cfg.projectId:DEFAULT_FB_CONFIG.projectId)}" placeholder="warm-storage-xxx"></div>
-        <div class="form-row"><label>storageBucket</label><input id="fb_bucket" value="${esc(cfg?cfg.storageBucket:DEFAULT_FB_CONFIG.storageBucket)}" placeholder="xxx.appspot.com"></div>
-        <div class="form-row"><label>messagingSenderId</label><input id="fb_sender" value="${esc(cfg?cfg.messagingSenderId:DEFAULT_FB_CONFIG.messagingSenderId)}"></div>
-        <div class="form-row"><label>appId</label><input id="fb_appid" value="${esc(cfg?cfg.appId:DEFAULT_FB_CONFIG.appId)}" placeholder="1:xxx:web:xxx"></div>
-        <div class="form-row"><label>measurementId (選填)</label><input id="fb_measurement" value="${esc(cfg?cfg.measurementId:(DEFAULT_FB_CONFIG.measurementId||''))}" placeholder="G-XXX..."></div>
+        <div class="form-row"><label>apiKey</label><input id="fb_apikey" value="${esc(cfg?cfg.apiKey:'')}" placeholder="AIza…"></div>
+        <div class="form-row"><label>authDomain</label><input id="fb_auth" value="${esc(cfg?cfg.authDomain:'')}" placeholder="xxx.firebaseapp.com"></div>
+        <div class="form-row"><label>projectId</label><input id="fb_project" value="${esc(cfg?cfg.projectId:'')}" placeholder="warm-storage-xxx"></div>
+        <div class="form-row"><label>storageBucket</label><input id="fb_bucket" value="${esc(cfg?cfg.storageBucket:'')}" placeholder="xxx.appspot.com"></div>
+        <div class="form-row"><label>messagingSenderId</label><input id="fb_sender" value="${esc(cfg?cfg.messagingSenderId:'')}"></div>
+        <div class="form-row"><label>appId</label><input id="fb_appid" value="${esc(cfg?cfg.appId:'')}" placeholder="1:xxx:web:xxx"></div>
+        <div class="form-row"><label>measurementId (選填)</label><input id="fb_measurement" value="${esc(cfg?cfg.measurementId:'')}" placeholder="G-XXX..."></div>
       </div>
       <div class="row">
         <button class="btn primary" onclick="saveFirebaseCfg()">💾 儲存並連線</button>
         <button class="btn soft" onclick="syncNow()">🔄 立即同步</button>
         <button class="btn danger" onclick="unbindFirebase()">解除綁定</button>
       </div>
-      <div style="margin-top:14px" id="fbStatus" class="cloud-status ${cl}">${fb.ready?'✅ 已連線，資料即時同步中':(cfg?'⚠️ 尚未連線，請點「儲存並連線」':'🔌 尚未綁定 Firebase（欄位已帶入預設，可直接儲存並連線）')}</div>
+      <div style="margin-top:14px" id="fbStatus" class="cloud-status ${cl}">${fb.ready?'✅ 已連線，資料即時同步中':(cfg?'⚠️ 尚未連線，請點「儲存並連線」':'🔌 尚未綁定 Firebase')}</div>
       <div class="desc" style="margin-top:10px">🔐 Firestore 規則建議（本 APP 使用 <b>warm_storage/main</b> 文件）：因為沒有登入系統，請至 Firebase 控制台將規則設為以下內容以允許讀寫：<pre style="white-space:pre-wrap;background:var(--card2);padding:10px;border-radius:10px;font-size:12px;line-height:1.6">rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -1596,6 +1600,23 @@ service cloud.firestore {
 }</pre>
     </div>`;
 }
+
+function checkMagicCode(val){
+  if(val.trim() === '000800'){
+    document.getElementById('fb_apikey').value = DEFAULT_FB_CONFIG.apiKey;
+    document.getElementById('fb_auth').value = DEFAULT_FB_CONFIG.authDomain;
+    document.getElementById('fb_project').value = DEFAULT_FB_CONFIG.projectId;
+    document.getElementById('fb_bucket').value = DEFAULT_FB_CONFIG.storageBucket;
+    document.getElementById('fb_sender').value = DEFAULT_FB_CONFIG.messagingSenderId;
+    document.getElementById('fb_appid').value = DEFAULT_FB_CONFIG.appId;
+    if(document.getElementById('fb_measurement')) {
+      document.getElementById('fb_measurement').value = DEFAULT_FB_CONFIG.measurementId || '';
+    }
+    toast('✅ 已自動帶入 Firebase 設定');
+    document.getElementById('fb_magic').value = ''; // 填寫後清空通關密碼框
+  }
+}
+
 function saveFirebaseCfg(){
   state.fbConfig={
     apiKey:document.getElementById('fb_apikey').value.trim(),
