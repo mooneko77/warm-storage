@@ -1015,22 +1015,27 @@ function renderDetail(){
   const records = (item.stockRecords||[]).slice().sort((a,b)=>num(b.time)-num(a.time));
 
   el.innerHTML = `
-    <div class="detail-top-bar">
-      <button class="btn ghost" onclick="navigate('#/cat/${item.categoryId}')">← 返回${cat?' '+esc(cat.name):''}</button>
-      <div class="dt-actions">
-        <button class="btn soft" onclick="openItemForm('${item.id}')">✏️ 編輯</button>
-        <button class="btn ghost" onclick="duplicateItem('${item.id}')">📄 複製</button>
-        <button class="btn danger" onclick="deleteItem('${item.id}')">🗑 刪除</button>
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom: 24px; flex-wrap:wrap; padding: 14px 18px; background: var(--card); border-radius: 20px; border: 1px solid var(--line); box-shadow: var(--shadow);">
+      <h2 style="font-size:17px; font-weight:700; color:var(--text); margin:0;">${esc(itemTitle(item))}</h2>
+      <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+        <button type="button" onclick="openItemForm('${item.id}')" style="padding: 6px 14px; background: #FFF3D4; color: #E89B1C; border-radius: 20px; font-size: 13px; font-weight: 700; border:none; cursor:pointer;">✏️ 編輯</button>
+        <button type="button" onclick="duplicateItem('${item.id}')" style="padding: 6px 14px; background: #E8F3E8; color: #558B55; border-radius: 20px; font-size: 13px; font-weight: 700; border:none; cursor:pointer;">複製</button>
+        <button type="button" onclick="deleteItem('${item.id}')" style="padding: 6px 14px; background: #FEEAEA; color: #D86060; border-radius: 20px; font-size: 13px; font-weight: 700; border:none; cursor:pointer;">刪除</button>
+        <button type="button" onclick="navigate('#/cat/${item.categoryId}')" style="width: 32px; height: 32px; display:flex; align-items:center; justify-content:center; color: var(--text-light); font-weight: bold; font-size: 20px; border-radius: 50%; border:none; background:transparent; cursor:pointer; margin-left: 4px;">✕</button>
       </div>
     </div>
-    <div class="detail-wrap">
-      <div class="gallery card" style="padding:14px">
-        ${mainImg?`<img class="gallery-main" src="${mainImg.dataUrl}" alt="">`:`<div class="gallery-main noimg" style="display:flex;align-items:center;justify-content:center;font-size:64px">${cat?.icon||'📦'}</div>`}
-        ${imgs.length>1?`<div class="gallery-thumbs" id="detailThumbs">${imgs.map((im,idx)=>`<div style="position:relative"><img src="${im.dataUrl}" class="${im.isMain?'on':''}" onclick="setMainView(${idx})" alt=""><div class="img-arrows"><button onclick="moveDetailImg(${idx},-1)">↑</button><button onclick="moveDetailImg(${idx},1)">↓</button></div></div>`).join('')}</div>`:''}
+    
+    <div style="display:flex; flex-direction:column; align-items:center; margin-bottom: 24px;">
+      <div style="width: 140px; height: 140px; border-radius: 36px; border: 2.5px dashed var(--accent2); background: var(--bg2); display:flex; align-items:center; justify-content:center; overflow:hidden; position:relative; box-shadow: var(--shadow); padding: 5px;">
+        <div style="width: 100%; height: 100%; border-radius: 30px; overflow: hidden; position: relative;">
+            ${mainImg?`<img src="${mainImg.dataUrl}" style="width:100%; height:100%; object-fit:cover;" alt="">`:`<div style="display:flex;align-items:center;justify-content:center;font-size:42px;width:100%;height:100%;background:var(--bg);">${cat?.icon||'📦'}</div>`}
+        </div>
       </div>
+      ${imgs.length>1?`<div class="gallery-thumbs" id="detailThumbs" style="justify-content:center; margin-top:14px;">${imgs.map((im,idx)=>`<div style="position:relative"><img src="${im.dataUrl}" class="${im.isMain?'on':''}" onclick="setMainView(${idx})" alt=""><div class="img-arrows"><button onclick="moveDetailImg(${idx},-1)">↑</button><button onclick="moveDetailImg(${idx},1)">↓</button></div></div>`).join('')}</div>`:''}
+    </div>
+
+    <div class="detail-wrap" style="grid-template-columns: 1fr;">
       <div class="detail-body">
-        <div class="detail-cat">${cat?esc(cat.name):''}</div>
-        <h2>${esc(itemTitle(item))}</h2>
         <div class="kv-grid">${kv}</div>
         ${item.buyLink?`<div class="card buy-link-card">
           <div class="buy-link-info">
@@ -1039,7 +1044,7 @@ function renderDetail(){
           </div>
           <button class="btn primary sm" onclick="openItemLink('${item.id}')">↗ 前往購買頁</button>
         </div>`:''}
-        <div class="qty-box detail-qty">📦 目前庫存：${q}　·　建檔 ${num(item.initialQty||0)} ＋入 ${inSum} −出 ${outSum}</div>
+        <div class="qty-box detail-qty" style="margin-top: 10px;">📦 目前庫存：${q}　·　建檔 ${num(item.initialQty||0)} ＋入 ${inSum} −出 ${outSum}</div>
         
         <!-- 新版 出入庫管理區塊 -->
         <div class="card" style="padding:0; overflow:hidden; border: 1px solid var(--line); margin-top:16px;">
@@ -1862,4 +1867,4 @@ if(!location.hash) navigate('#/home'); else router();
 initFirebase();
 </script>
 </body>
-</html>```
+</html>
