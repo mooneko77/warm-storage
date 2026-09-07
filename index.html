@@ -1007,7 +1007,7 @@ function renderDetail(){
     }
   }); }
   if(item.platform) addKV('購買平台', esc(item.platform));
-  if(item.buyTime) addKV('購買時間', fmtDate(item.buyTime));
+  addKV('建檔日期', fmtDate(item.createdAt));
   if(item.price!=null && item.price!=='') addKV('購買單價', '$'+num(item.price));
   if(item.totalPrice!=null && item.totalPrice!=='') addKV('實付總價', '$'+num(item.totalPrice));
   if(item.note) addKV('備註', esc(item.note));
@@ -1018,7 +1018,7 @@ function renderDetail(){
     <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom: 24px; flex-wrap:wrap; padding: 14px 18px; background: var(--card); border-radius: 20px; border: 1px solid var(--line); box-shadow: var(--shadow);">
       <h2 style="font-size:17px; font-weight:700; color:var(--text); margin:0;">${esc(itemTitle(item))}</h2>
       <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-        <button type="button" onclick="openItemForm('${item.id}')" style="padding: 6px 14px; background: #FFF3D4; color: #E89B1C; border-radius: 20px; font-size: 13px; font-weight: 700; border:none; cursor:pointer;">✏️ 編輯</button>
+        <button type="button" onclick="openItemForm('${item.id}')" style="padding: 6px 14px; background: #FFF3D4; color: #E89B1C; border-radius: 20px; font-size: 13px; font-weight: 700; border:none; cursor:pointer;">編輯</button>
         <button type="button" onclick="duplicateItem('${item.id}')" style="padding: 6px 14px; background: #E8F3E8; color: #558B55; border-radius: 20px; font-size: 13px; font-weight: 700; border:none; cursor:pointer;">複製</button>
         <button type="button" onclick="deleteItem('${item.id}')" style="padding: 6px 14px; background: #FEEAEA; color: #D86060; border-radius: 20px; font-size: 13px; font-weight: 700; border:none; cursor:pointer;">刪除</button>
         <button type="button" onclick="navigate('#/cat/${item.categoryId}')" style="width: 32px; height: 32px; display:flex; align-items:center; justify-content:center; color: var(--text-light); font-weight: bold; font-size: 20px; border-radius: 50%; border:none; background:transparent; cursor:pointer; margin-left: 4px;">✕</button>
@@ -1044,7 +1044,6 @@ function renderDetail(){
           </div>
           <button class="btn primary sm" onclick="openItemLink('${item.id}')">↗ 前往購買頁</button>
         </div>`:''}
-        <div class="qty-box detail-qty" style="margin-top: 10px;">📦 目前庫存：${q}　·　建檔 ${num(item.initialQty||0)} ＋入 ${inSum} −出 ${outSum}</div>
         
         <!-- 新版 出入庫管理區塊 -->
         <div class="card" style="padding:0; overflow:hidden; border: 1px solid var(--line); margin-top:16px;">
@@ -1056,9 +1055,9 @@ function renderDetail(){
                 <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg); padding:10px 14px; border-radius:12px; margin-bottom:12px; border:1px solid var(--line);">
                     <span style="font-size:13px; font-weight:600; color:var(--text-light);">庫存 ( ${q} &rarr; <span id="detailStockAfter">${currentDetailStockMode==='out'?Math.max(0,q-1):q+1}</span> )</span>
                     <div style="display:flex; align-items:center; gap:8px; background:var(--bg2); padding:4px; border-radius:30px;">
-                        <button class="btn ghost sm" style="width:28px;height:28px;padding:0;border-radius:50%;border:none;background:var(--card);color:var(--primary-deep);font-weight:bold;box-shadow:0 2px 4px rgba(0,0,0,0.05);" onclick="adjDetailStock(-1)">−</button>
-                        <input type="number" id="detailStockQty" value="1" min="1" style="width:36px;text-align:center;border:none;background:transparent;font-weight:bold;font-size:14px;outline:none;color:var(--text);" oninput="updateDetailStockAfter()">
-                        <button class="btn ghost sm" style="width:28px;height:28px;padding:0;border-radius:50%;border:none;background:var(--card);color:var(--primary-deep);font-weight:bold;box-shadow:0 2px 4px rgba(0,0,0,0.05);" onclick="adjDetailStock(1)">＋</button>
+                        <button class="btn ghost sm" style="display:flex;align-items:center;justify-content:center;width:28px;height:28px;padding:0;border-radius:50%;border:none;background:var(--card);color:var(--primary-deep);font-weight:bold;font-size:16px;line-height:1;box-shadow:0 2px 4px rgba(0,0,0,0.05);" onclick="adjDetailStock(-1)">−</button>
+                        <input type="number" id="detailStockQty" value="1" min="1" style="width:36px;height:28px;margin:0;padding:0;text-align:center;border:none;background:transparent;font-weight:bold;font-size:15px;outline:none;color:var(--text);" oninput="updateDetailStockAfter()">
+                        <button class="btn ghost sm" style="display:flex;align-items:center;justify-content:center;width:28px;height:28px;padding:0;border-radius:50%;border:none;background:var(--card);color:var(--primary-deep);font-weight:bold;font-size:16px;line-height:1;box-shadow:0 2px 4px rgba(0,0,0,0.05);" onclick="adjDetailStock(1)">＋</button>
                     </div>
                 </div>
                 <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg); padding:10px 14px; border-radius:12px; margin-bottom:12px; border:1px solid var(--line);">
