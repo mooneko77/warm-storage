@@ -171,12 +171,13 @@ a{color:var(--primary-deep); text-decoration:none;}
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.2;
 }
 
-.cat-page-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px;}
-.cat-page-head .cph-left{flex:0 0 auto;min-width:0;display:flex;justify-content:flex-start;}
-.cat-page-head .cph-center{flex:1;min-width:0;text-align:center;font-size:17px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap;overflow:hidden;}
-.cat-page-head .cph-center .cph-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;max-width:60vw;}
+/* 確保品類頁面頂部排版標題完美置中 */
+.cat-page-head{display:flex;align-items:center;justify-content:center;position:relative;margin-bottom:12px;min-height:36px;}
+.cat-page-head .cph-left{position:absolute;left:0;top:50%;transform:translateY(-50%);}
+.cat-page-head .cph-center{text-align:center;font-size:17px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap;max-width:60vw;}
+.cat-page-head .cph-center .cph-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .cat-page-head .cph-center .badge{flex-shrink:0;}
-.cat-page-head .cph-right{flex:0 0 auto;min-width:0;display:flex;justify-content:flex-end;}
+
 .cat-page-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px;justify-content:center;}
 .item-card .ck{position:absolute;top:10px;left:10px;z-index:5;display:none;}
 .batch-mode .ck{display:block;}
@@ -861,7 +862,6 @@ function renderCatList(){
     <div class="cat-page-head">
       <div class="cph-left"><button class="btn ghost sm" onclick="navigate('#/home')">← 返回</button></div>
       <div class="cph-center"><span class="cph-name">${esc(cat.name)}</span><span class="badge orange">${items.length}</span></div>
-      <div class="cph-right"></div>
     </div>
     <div class="cat-page-actions">
       <label class="switch" title="切換排序模式"><input type="checkbox" ${isCustomSort?'checked':''} onchange="toggleCustomSort('${cat.id}',this.checked)"><span class="slider"></span></label>
@@ -1055,9 +1055,13 @@ function renderDetail(){
                 <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg); padding:10px 14px; border-radius:12px; margin-bottom:12px; border:1px solid var(--line);">
                     <span style="font-size:13px; font-weight:600; color:var(--text-light);">庫存 ( ${q} &rarr; <span id="detailStockAfter">${currentDetailStockMode==='out'?Math.max(0,q-1):q+1}</span> )</span>
                     <div style="display:flex; align-items:center; gap:8px; background:var(--bg2); padding:4px; border-radius:30px;">
-                        <button class="btn ghost sm" style="display:flex;align-items:center;justify-content:center;width:28px;height:28px;padding:0;border-radius:50%;border:none;background:var(--card);color:var(--primary-deep);font-weight:bold;font-size:16px;line-height:1;box-shadow:0 2px 4px rgba(0,0,0,0.05);" onclick="adjDetailStock(-1)">−</button>
+                        <button class="btn ghost sm" style="display:flex;align-items:center;justify-content:center;width:28px;height:28px;padding:0;border-radius:50%;border:none;background:var(--card);color:var(--primary-deep);box-shadow:0 2px 4px rgba(0,0,0,0.05);" onclick="adjDetailStock(-1)">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        </button>
                         <input type="number" id="detailStockQty" value="1" min="1" style="width:36px;height:28px;margin:0;padding:0;text-align:center;border:none;background:transparent;font-weight:bold;font-size:15px;outline:none;color:var(--text);" oninput="updateDetailStockAfter()">
-                        <button class="btn ghost sm" style="display:flex;align-items:center;justify-content:center;width:28px;height:28px;padding:0;border-radius:50%;border:none;background:var(--card);color:var(--primary-deep);font-weight:bold;font-size:16px;line-height:1;box-shadow:0 2px 4px rgba(0,0,0,0.05);" onclick="adjDetailStock(1)">＋</button>
+                        <button class="btn ghost sm" style="display:flex;align-items:center;justify-content:center;width:28px;height:28px;padding:0;border-radius:50%;border:none;background:var(--card);color:var(--primary-deep);box-shadow:0 2px 4px rgba(0,0,0,0.05);" onclick="adjDetailStock(1)">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        </button>
                     </div>
                 </div>
                 <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg); padding:10px 14px; border-radius:12px; margin-bottom:12px; border:1px solid var(--line);">
@@ -1555,7 +1559,6 @@ function renderStats(){
     </div>`;
 }
 
-/* ---------- 到期專區 ---------- */
 function renderExpiry(){
   const el=document.getElementById('view-expiry');
   const list=state.items.map(getExpiryInfo).filter(Boolean);
