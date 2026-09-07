@@ -1621,9 +1621,9 @@ function renderSettings(){
       <div class="fb-btn-row">
         <button class="btn primary" onclick="saveFirebaseCfg()">💾 儲存並連線</button>
         <button class="btn soft" onclick="syncNow()">🔄 立即同步</button>
-        <button class="btn danger" onclick="unbindFirebase()">解除綁定</button>
+        <button class="btn danger" onclick="unbindFirebase()">❌ 解除綁定</button>
       </div>
-      <div style="margin-top:14px" id="fbStatus" class="cloud-status ${cl}">${fb.ready?'✅ 已連線，資料即時同步中':(cfg?'⚠️ 尚未連線，請點「儲存並連線」':'🔌 尚未綁定（輸入魔法代碼 000800 快速連線）')}</div>
+      <div style="margin-top:14px" id="fbStatus" class="cloud-status ${cl}">${fb.ready?'✅ 已連線，資料即時同步中':(cfg?'⚠️ 尚未連線，請點「儲存並連線」':'🔌 尚未綁定（輸入魔法代碼快速連線）')}</div>
     </div>
 
     <div class="set-card">
