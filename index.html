@@ -9,7 +9,7 @@
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
 <!-- Excel SheetJS -->
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
-<!-- Firebase compat（綁定後才啟用） -->
+<!-- Firebase compat -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <style>
@@ -151,15 +151,16 @@ a{color:var(--primary-deep); text-decoration:none;}
 .card-exp.soon{background:#E67E22;color:#fff;}
 .card-exp.ok{background:var(--success);color:#fff;}
 
-/* 卡片底部 */
+/* 卡片底部 (已更新：內容置中顯示) */
 .card-bottom{
   padding:8px 10px; display:flex; flex-direction:column; flex:1; 
   justify-content:space-between; background:var(--card); 
-  border-radius: 0 0 16px 16px; min-width:0;
+  border-radius: 0 0 16px 16px; min-width:0; align-items:center;
 }
 .card-name{
   font-size:13px;font-weight:800;color:var(--text);white-space:nowrap;
   overflow:hidden;text-overflow:ellipsis;line-height:1.2; margin-bottom:4px;
+  text-align:center; width:100%;
 }
 .card-brand{
   font-size:11px;font-weight:700;color:var(--text-light);
@@ -172,7 +173,7 @@ a{color:var(--primary-deep); text-decoration:none;}
 }
 
 /* 確保品類頁面頂部排版標題完美置中 */
-.cat-page-head{display:flex;align-items:center;justify-content:center;position:relative;margin-bottom:12px;min-height:36px;}
+.cat-page-head{display:flex;align-items:center;justify-content:center;position:relative;margin-bottom:12px;min-height:36px;width:100%;}
 .cat-page-head .cph-left{position:absolute;left:0;top:50%;transform:translateY(-50%);}
 .cat-page-head .cph-center{text-align:center;font-size:17px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap;max-width:60vw;}
 .cat-page-head .cph-center .cph-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
@@ -188,6 +189,7 @@ a{color:var(--primary-deep); text-decoration:none;}
 .img-arrows button{width:20px;height:20px;border-radius:8px;font-size:11px;background:rgba(255,255,255,.92);border:1px solid var(--line);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.1);}
 .mng-arrows{display:flex;flex-direction:column;gap:3px;flex-shrink:0;}
 .mng-arrows .btn{width:38px;height:34px;padding:0;justify-content:center;font-size:16px;border-radius:12px;background:var(--primary-soft);color:var(--primary-deep);}
+
 /* 欄位 DIY 編輯器 */
 .cf-editor{display:flex;flex-direction:column;gap:8px;margin:8px 0 4px;max-height:340px;overflow:auto;padding-right:4px;}
 .cf-row{background:var(--card2);border:1.5px solid var(--line);border-radius:14px;padding:9px 10px;}
@@ -201,10 +203,12 @@ a{color:var(--primary-deep); text-decoration:none;}
 .cf-sub input[type=text]{flex:1;min-width:140px;padding:6px 10px;border-radius:10px;border:1.5px solid var(--line);background:var(--card);outline:none;font-size:12.5px;}
 .cf-sub label{display:inline-flex;align-items:center;gap:5px;color:var(--primary-deep);font-weight:600;cursor:pointer;}
 .cf-add{width:100%;margin-top:8px;padding:9px;border-radius:14px;border:1.5px dashed var(--primary);color:var(--primary-deep);background:var(--primary-soft);font-size:13.5px;font-weight:600;}
+
 /* 表單內自訂欄位（依型別） */
 .cf-img{display:flex;align-items:center;gap:8px;max-width:100%;}
 .cf-img input{flex:1;min-width:0;}
 .cf-img img{width:44px;height:44px;object-fit:cover;border-radius:10px;border:1.5px solid var(--line);}
+
 /* 到期專區 */
 .exp-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px;}
 .exp-badge.expired{background:var(--danger-bg);color:var(--danger);}
@@ -221,11 +225,13 @@ a{color:var(--primary-deep); text-decoration:none;}
 .filter-bar .btn:active{transform:scale(.96);}
 .badge{font-size:11.5px;padding:2px 9px;border-radius:20px;font-weight:600;}
 .badge.orange{background:var(--primary-soft);color:var(--primary-deep);}
+
 /* 品類內頁頂部（手機適配） */
 .cat-head{display:flex;align-items:center;justify-content:space-between;gap:10px 14px;flex-wrap:wrap;margin:6px 2px 14px;}
 .cat-head-title{display:flex;align-items:center;gap:8px;font-size:18px;font-weight:700;min-width:0;}
 .cat-head-title .cat-ico{width:34px;height:34px;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;}
 .cat-head-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+
 /* 空狀態 */
 .empty-state{text-align:center;color:var(--text-light);padding:64px 0 70px;}
 .empty-state .es-ico{font-size:48px;margin-bottom:12px;opacity:.8;}
@@ -495,6 +501,18 @@ table.pv th{background:var(--bg2);position:sticky;top:0;}
   <div class="modal"></div>
 </div>
 
+<!-- 統一替換 confirm() 的自訂確認框 -->
+<div id="modalConfirm" class="modal-overlay" onclick="if(event.target===this)closeConfirm()">
+  <div class="modal" style="max-width:400px; text-align:center; padding: 24px 20px;">
+    <h3 style="margin-top:0; margin-bottom:16px;">提示</h3>
+    <p id="confirmMessage" style="margin-bottom:24px; color:var(--text); font-size:15px;"></p>
+    <div class="btn-row" style="justify-content:center; gap: 12px;">
+      <button class="btn ghost" onclick="closeConfirm()">取消</button>
+      <button class="btn primary" id="confirmBtn">確定</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
 <input type="file" id="fileExcel" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleExcelFile(this)">
 <input type="file" id="fileJSON" accept=".json" style="display:none" onchange="handleJSONFile(this)">
@@ -626,6 +644,22 @@ function normalizeCategories(){
   state.tags = [];
   state.items.forEach(it=>{ delete it.tags; });
 }
+
+/* --- 自訂 Confirm 替代瀏覽器原生的 confirm() --- */
+let confirmCallback = null;
+function customConfirm(msg, callback) {
+  document.getElementById('confirmMessage').innerText = msg;
+  confirmCallback = callback;
+  document.getElementById('modalConfirm').classList.add('show');
+}
+function closeConfirm() {
+  document.getElementById('modalConfirm').classList.remove('show');
+  confirmCallback = null;
+}
+document.getElementById('confirmBtn').addEventListener('click', () => {
+  if (confirmCallback) confirmCallback();
+  closeConfirm();
+});
 
 /* ---------- 本地持久化 ---------- */
 function loadState(){
@@ -764,6 +798,14 @@ function router(){
   const h = location.hash.replace(/^#\/?/,'') || 'home';
   const parts = h.split('/');
   batchMode=false; batchSel.clear();
+  
+  // 切換頁面時重置篩選狀態
+  if (!h.startsWith('cat/')) {
+      filterState = { q:'', customFilters:{} };
+  } else if (parts[1] !== currentCatId) {
+      filterState.customFilters = {}; // 切換不同品類時重置分類篩選
+  }
+  
   if(parts[0]==='cat'){ currentCatId=parts[1]; showView('view-cat'); renderCatList(); }
   else if(parts[0]==='item'){ currentItemId=parts[1]; currentDetailStockMode='in'; showView('view-detail'); renderDetail(); }
   else if(parts[0]==='expiry'){ showView('view-expiry'); renderExpiry(); }
@@ -837,14 +879,16 @@ function saveCategoryOrderFromDom(gridId){
 }
 function openCat(id){ navigate('#/cat/'+id); }
 
-/* ---------- 品類列表頁 ---------- */
-let filterState = { q:'' };
+/* ---------- 品類列表頁 (支援自訂材質/分類篩選器) ---------- */
+let filterState = { q:'', customFilters:{} };
 function renderCatList(){
   const cat = getCat(currentCatId);
   if(!cat){ navigate('#/home'); return; }
   const el = document.getElementById('view-cat');
   let items = state.items.filter(i=>i.categoryId===cat.id);
   const hasAny = items.length>0;
+  
+  // 1. 搜尋字詞篩選
   const q = (filterState.q||'').trim().toLowerCase();
   if(q){
     items = items.filter(i=>{
@@ -853,9 +897,47 @@ function renderCatList(){
     });
   }
 
+  // 2. 自訂欄位（如材質、品相）篩選
+  Object.keys(filterState.customFilters).forEach(fId => {
+     const fVal = filterState.customFilters[fId];
+     if (fVal) {
+         items = items.filter(i => i.custom && i.custom[fId] === fVal);
+     }
+  });
+
   const isCustomSort = sortModes['cat:'+cat.id]===true;
   if(!isCustomSort){
     items = [...items].sort((a,b)=> (num(b.createdAt||0))-(num(a.createdAt||0)));
+  }
+
+  // 動態產生篩選器（針對 select 類型，或是名稱包含「材質」、「分類」、「類型」、「品牌」的欄位）
+  let filterHTML = '';
+  const filterableFields = cat.customFields.filter(f => f.type === 'select' || f.name.includes('材質') || f.name.includes('分類') || f.name.includes('類型') || f.name.includes('品牌'));
+  
+  if (filterableFields.length > 0) {
+      filterHTML = `<div class="filter-bar" style="justify-content:center; margin-bottom: 12px; gap: 8px;">`;
+      filterableFields.forEach(f => {
+          let options = [];
+          if (f.type === 'select' && f.options && f.options.length) {
+              options = f.options;
+          } else {
+              // 若是文字欄位，自動從現有物品抓取不重複的值
+              const vals = new Set();
+              state.items.filter(i=>i.categoryId===cat.id).forEach(i => {
+                  if(i.custom && i.custom[f.id]) vals.add(String(i.custom[f.id]).trim());
+              });
+              options = Array.from(vals).filter(Boolean).sort();
+          }
+
+          if (options.length > 0) {
+              const selVal = filterState.customFilters[f.id] || '';
+              filterHTML += `<select onchange="onCustomFilterChange('${f.id}', this.value)" style="padding: 6px 12px; border-radius: 20px; border: 1px solid var(--primary-soft); font-size: 12px; background: var(--card); color: var(--text); outline: none; box-shadow: 0 2px 6px rgba(0,0,0,0.04);">
+                  <option value="">篩選 ${esc(f.name)}</option>
+                  ${options.map(o => `<option value="${esc(o)}" ${selVal===o?'selected':''}>${esc(o)}</option>`).join('')}
+              </select>`;
+          }
+      });
+      filterHTML += `</div>`;
   }
 
   el.innerHTML = `
@@ -863,13 +945,14 @@ function renderCatList(){
       <div class="cph-left"><button class="btn ghost sm" onclick="navigate('#/home')">← 返回</button></div>
       <div class="cph-center"><span class="cph-name">${esc(cat.name)}</span><span class="badge orange">${items.length}</span></div>
     </div>
+    ${filterHTML}
     <div class="cat-page-actions">
       <label class="switch" title="切換排序模式"><input type="checkbox" ${isCustomSort?'checked':''} onchange="toggleCustomSort('${cat.id}',this.checked)"><span class="slider"></span></label>
       <span style="font-size:12.5px;color:var(--text-light)">自訂排序</span>
       ${batchMode?`<button class="btn danger sm" onclick="exitBatch()">取消批量</button>`:`<button class="btn soft sm" onclick="enterBatch()">批量</button>`}
       <button class="btn primary sm" onclick="openItemForm(null,'${cat.id}')">＋ 新增物品</button>
     </div>
-    ${items.length===0?`<div class="empty-state"><div class="es-ico">${cat.icon}</div>此品類還沒有物品<br><span>點「＋ 新增物品」開始收納</span></div>`:''}
+    ${items.length===0?`<div class="empty-state"><div class="es-ico">${cat.icon}</div>此品類還沒有符合的物品<br><span>點「＋ 新增物品」開始收納</span></div>`:''}
     <div class="item-grid ${batchMode?'batch-mode':''}" id="catItemGrid">
       ${items.map(i=>itemCardHTML(i,isCustomSort)).join('')}
     </div>
@@ -902,17 +985,28 @@ function getItemFieldText(item){
   return parts.join(' ');
 }
 function toggleCustomSort(catId, on){ sortModes['cat:'+catId]=on; renderCatList(); if(on) toast('已開啟自訂排序，長按拖拽調整順序'); }
+function onCustomFilterChange(fieldId, val) {
+    filterState.customFilters[fieldId] = val;
+    renderCatList();
+}
 
-/* 毛線倉庫風格 - 卡片 HTML */
+/* 毛線倉庫風格 - 卡片 HTML (含置中與品牌/分類標籤並列) */
 function itemCardHTML(i, customMode){
   const mainImg = (i.images||[]).find(im=>im.isMain) || (i.images||[])[0];
   const q = qtyOf(i);
   const title=itemTitle(i);
   const cat = getCat(i.categoryId);
-  const brandField = cat ? (cat.customFields||[]).find(f=>f.name==='品牌') : null;
+  
+  // 智慧判斷品牌欄位（包含品牌、團體、IP）
+  const brandField = cat ? (cat.customFields||[]).find(f=>f.name.includes('品牌') || f.name.includes('團體') || f.name === 'IP') : null;
   const brand = brandField && i.custom ? (i.custom[brandField.id]||'') : '';
+  
   const hasName = !!(i.name && String(i.name).trim());
-  const subItem = (hasName && cat && cat.titleField && i.custom) ? (i.custom[cat.titleField]||'') : '';
+  let subItem = '';
+  // 若有自訂欄位標題，則顯示為品項分類標籤
+  if (hasName && cat && cat.titleField && i.custom && i.custom[cat.titleField]) {
+      subItem = i.custom[cat.titleField];
+  }
   
   const price = i.price!=null && i.price!=='' ? num(i.price) : null;
   const exp=getExpiryInfo(i);
@@ -933,8 +1027,8 @@ function itemCardHTML(i, customMode){
       </div>
       <div class="card-bottom">
           <span class="card-name">${esc(title)}</span>
-          <div style="display:flex; flex-direction:column; gap:4px; margin-top:auto;">
-              ${brand?`<span class="card-brand">${esc(brand)}</span>`:''}
+          <div style="display:flex; justify-content:center; flex-wrap:wrap; gap:4px; margin-top:auto; width:100%;">
+              ${brand?`<span class="card-cat-pill" style="background:var(--bg2);color:var(--text)">${esc(brand)}</span>`:''}
               ${subItem?`<span class="card-cat-pill">${esc(subItem)}</span>`:''}
           </div>
       </div>
@@ -969,9 +1063,10 @@ function doBatchChangeCat(){
 }
 function batchDelete(){
   if(!batchSel.size){ toast('請先勾選物品'); return; }
-  if(!confirm(`確定刪除選中的 ${batchSel.size} 件物品？`)) return;
-  state.items = state.items.filter(i=>!batchSel.has(i.id));
-  batchMode=false; batchSel.clear(); saveState(); renderCatList(); toast('已刪除');
+  customConfirm(`確定刪除選中的 ${batchSel.size} 件物品？`, () => {
+      state.items = state.items.filter(i=>!batchSel.has(i.id));
+      batchMode=false; batchSel.clear(); saveState(); renderCatList(); toast('已刪除');
+  });
 }
 
 /* ---------- 物品詳情 (整合毛線倉庫 出入庫系統) ---------- */
@@ -1108,6 +1203,7 @@ function renderDetail(){
     });
   }
 }
+
 function setMainView(idx){
   const item=getItem(currentItemId); if(!item) return;
   const imgs=item.images||[];
@@ -1127,18 +1223,19 @@ function openItemLink(id){
   else toast('此物品沒有商品連結');
 }
 function deleteItem(id){
-  if(!confirm('確定刪除此物品？此操作無法復原')) return;
-  const item = getItem(id);
-  const catId = item ? item.categoryId : currentCatId;
-  
-  state.items = state.items.filter(i=>i.id!==id);
-  saveState();
-  
-  if(currentItemId===id) {
-    navigate('#/cat/' + catId);
-  } else {
-    renderDetail();
-  }
+  customConfirm('確定刪除此物品？此操作無法復原', () => {
+      const item = getItem(id);
+      const catId = item ? item.categoryId : currentCatId;
+      
+      state.items = state.items.filter(i=>i.id!==id);
+      saveState();
+      
+      if(currentItemId===id) {
+        navigate('#/cat/' + catId);
+      } else {
+        renderDetail();
+      }
+  });
 }
 function duplicateItem(id){
   const original = getItem(id);
@@ -1188,26 +1285,31 @@ function submitDetailStock() {
   const dateStr = document.getElementById('detailStockDate').value;
   const time = dateStr ? new Date(dateStr + 'T00:00:00').getTime() : Date.now();
   
-  if(currentDetailStockMode === 'out' && qtyOf(item) - qty < 0) {
-    if(!confirm(`出庫 ${qty} 將使庫存變為負數（目前 ${qtyOf(item)}），仍要繼續？`)) return;
-  }
+  const finishStock = () => {
+      const rec = { id: uid(), type: currentDetailStockMode, qty, time, note };
+      item.stockRecords = item.stockRecords || [];
+      item.stockRecords.push(rec);
+      
+      saveState();
+      renderDetail();
+      toast(currentDetailStockMode === 'in' ? '✅ 已入庫' : '✅ 已出庫');
+  };
 
-  const rec = { id: uid(), type: currentDetailStockMode, qty, time, note };
-  item.stockRecords = item.stockRecords || [];
-  item.stockRecords.push(rec);
-  
-  saveState();
-  renderDetail();
-  toast(currentDetailStockMode === 'in' ? '✅ 已入庫' : '✅ 已出庫');
+  if(currentDetailStockMode === 'out' && qtyOf(item) - qty < 0) {
+      customConfirm(`出庫 ${qty} 將使庫存變為負數（目前 ${qtyOf(item)}），仍要繼續？`, finishStock);
+  } else {
+      finishStock();
+  }
 }
 function deleteStockRecord(recId) {
-  if(!confirm('確定刪除此紀錄？')) return;
-  const item = getItem(currentItemId);
-  if(!item) return;
-  item.stockRecords = (item.stockRecords || []).filter(r => r.id !== recId);
-  saveState();
-  renderDetail();
-  toast('已刪除紀錄');
+  customConfirm('確定刪除此紀錄？', () => {
+      const item = getItem(currentItemId);
+      if(!item) return;
+      item.stockRecords = (item.stockRecords || []).filter(r => r.id !== recId);
+      saveState();
+      renderDetail();
+      toast('已刪除紀錄');
+  });
 }
 
 /* ---------- 物品表單 ---------- */
@@ -1308,6 +1410,7 @@ function movePendingImg(i, dir){
   renderImgList();
 }
 function removePendingImg(i){ pendingImages.splice(i,1); renderImgList(); }
+
 function onImgFiles(input){
   const files=[...input.files];
   if(!files.length) return;
@@ -1415,6 +1518,7 @@ function moveCat(id, dir){
   state.categories.forEach((c,k)=>c.order=k);
   saveState(); renderManage(); toast('✅ 順序已調整並同步');
 }
+
 let editingCatId=null;
 let draftCf=[]; 
 function renderCfEditor(){
@@ -1493,13 +1597,18 @@ function saveCatForm(){
 }
 function deleteCat(id){
   const count=state.items.filter(i=>i.categoryId===id).length;
-  if(count>0){ if(!confirm(`此品類內有 ${count} 件物品，刪除品類後這些物品也會被刪除，確定？`)) return; }
-  else { if(!confirm('確定刪除此品類？')) return; }
-  state.categories=state.categories.filter(c=>c.id!==id);
-  state.items=state.items.filter(i=>i.categoryId!==id);
-  saveState(); renderManage(); toast('已刪除');
+  const finishDelete = () => {
+      state.categories = state.categories.filter(c=>c.id!==id);
+      state.items = state.items.filter(i=>i.categoryId!==id);
+      saveState(); renderManage(); toast('已刪除');
+  };
+  
+  if(count>0){
+      customConfirm(`此品類內有 ${count} 件物品，刪除品類後這些物品也會被刪除，確定？`, finishDelete);
+  } else {
+      customConfirm('確定刪除此品類？', finishDelete);
+  }
 }
-
 
 function renderStats(){
   const el=document.getElementById('view-stats');
@@ -1669,11 +1778,13 @@ function saveFirebaseCfg(){
   testFirebase();
 }
 function clearAll(){
-  if(!confirm('確定清除全部資料？此操作無法復原！')) return;
-  if(!confirm('再次確認：所有物品、品類、流水都將刪除。')) return;
-  state={v:1,updatedAt:Date.now(),categories:[],items:[],fbConfig:state.fbConfig};
-  saveLocal(); if(fb.ready) cloudDocRef().delete().catch(()=>{});
-  toast('已清除'); navigate('#/home'); renderAll();
+  customConfirm('確定清除全部資料？此操作無法復原！', () => {
+      customConfirm('再次確認：所有物品、品類、流水都將刪除。', () => {
+          state={v:1,updatedAt:Date.now(),categories:[],items:[],fbConfig:state.fbConfig};
+          saveLocal(); if(fb.ready) cloudDocRef().delete().catch(()=>{});
+          toast('已清除'); navigate('#/home'); renderAll();
+      });
+  });
 }
 
 /* ---------- Excel ---------- */
@@ -1835,10 +1946,13 @@ function handleJSONFile(input){
     try{
       const d=JSON.parse(e.target.result);
       if(!d || d.v!==1){ toast('❌ 不是有效的備份檔'); return; }
-      if(!confirm('匯入將覆蓋目前所有資料，確定？')) return;
-      state=Object.assign(state,d); saveLocal();
-      if(fb.ready) cloudPush();
-      toast('✅ 已還原'); router();
+      
+      customConfirm('匯入將覆蓋目前所有資料，確定？', () => {
+          state=Object.assign(state,d); saveLocal();
+          if(fb.ready) cloudPush();
+          toast('✅ 已還原'); router();
+      });
+      
     }catch(err){ toast('❌ 無法解析備份檔'); }
     input.value='';
   };
