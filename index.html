@@ -1427,7 +1427,8 @@ function itemFormHTML(item, cat){
   const customHTML = cat ? cat.customFields.map(f=>{
     const val = item&&item.custom? item.custom[f.id] : '';
     const reqMark = f.isExpiry?'<span style="color:var(--danger)">（到期）</span>':'';
-    return `<div class="form-row"><label>${esc(f.name)} ${reqMark}</label>${cfInputHTML(f, val)}</div>`;
+    const clearBtn = f.type==='date' ? `<button type="button" onclick="const r=this.closest('.form-row');const i=r.querySelector('input[type=date]');i.value='';i.dispatchEvent(new Event('change'));" style="margin-left:6px;padding:1px 8px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--text-light);font-size:11px;cursor:pointer;line-height:1.4;">清除</button>` : '';
+    return `<div class="form-row"><label style="display:flex;align-items:center;">${esc(f.name)} ${reqMark}${clearBtn}</label>${cfInputHTML(f, val)}</div>`;
   }).join('') : '';
 
   return `
