@@ -130,26 +130,29 @@ a{color:var(--primary-deep); text-decoration:none;}
 .item-thumb{width:100%;height:100%;aspect-ratio:auto;border-radius:0;object-fit:cover;background:var(--bg2);display:block;}
 .item-thumb.noimg{display:flex;align-items:center;justify-content:center;font-size:32px;background:linear-gradient(135deg,var(--bg2),var(--primary-soft));}
 
-/* 卡片角標 */
+/* 卡片角標：三枚徽章統一 20px 高度、文字垂直置中，四個角全圓 */
 .card-price{
-  position:absolute; top:8px; left:8px; background:var(--success); color:#fff;
-  border-radius:12px; padding:2px 6px; font-size:10px; font-weight:700; 
+  position:absolute; top:2px; left:2px; background:var(--success); color:#fff;
+  border-radius:999px; padding:0 6px; font-size:10.5px; font-weight:700;
   box-shadow:0 2px 4px rgba(0,0,0,.1); z-index:2; line-height:1; border:1px solid #fff;
+  height:20px; display:inline-flex; align-items:center; justify-content:center;
 }
 .card-qty{
-  position:absolute; bottom:4px; right:4px; background:var(--primary); color:#fff;
-  border-radius:12px; padding:2px 6px; font-size:11px; font-weight:700; 
+  position:absolute; bottom:2px; right:2px; background:var(--primary); color:#fff;
+  border-radius:999px; padding:0 6px; font-size:10.5px; font-weight:700;
   box-shadow:0 2px 4px rgba(0,0,0,.1); z-index:2; line-height:1; min-width:20px; text-align:center; border:1px solid #fff;
+  height:20px; display:inline-flex; align-items:center; justify-content:center;
 }
-.card-qty.low{background:var(--danger);}
+.card-qty.low{background:var(--primary);}
 .card-qty.none{background:#A79A86;}
 .card-exp{
-  position:absolute; bottom:8px; left:8px; font-size:10px; font-weight:700; 
-  padding:2px 6px; border-radius:12px; z-index:2; box-shadow:0 2px 4px rgba(0,0,0,.1); border:1px solid #fff;
+  position:absolute; bottom:2px; left:2px; font-size:10.5px; font-weight:700;
+  padding:0 6px; border-radius:999px; z-index:2; box-shadow:0 2px 4px rgba(0,0,0,.1); border:1px solid #fff;
+  height:20px; display:inline-flex; align-items:center; justify-content:center; line-height:1;
 }
 .card-exp.expired{background:var(--danger);color:#fff;}
 .card-exp.soon{background:#E67E22;color:#fff;}
-.card-exp.ok{background:var(--success);color:#fff;}
+.card-exp.ok{background:#4A90D9;color:#fff;}
 
 /* 卡片底部 (已更新：內容置中顯示) */
 .card-bottom{
@@ -175,9 +178,10 @@ a{color:var(--primary-deep); text-decoration:none;}
 /* 確保品類頁面頂部排版標題完美置中 */
 .cat-page-head{display:flex;align-items:center;justify-content:center;position:relative;margin-bottom:12px;min-height:36px;width:100%;}
 .cat-page-head .cph-left{position:absolute;left:0;top:50%;transform:translateY(-50%);}
-.cat-page-head .cph-center{text-align:center;font-size:17px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap;max-width:60vw;}
-.cat-page-head .cph-center .cph-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.cat-page-head .cph-center .badge{flex-shrink:0;}
+/* 名稱本身在頁面正中；數量徽章脫離排版流、絕對定位到名稱右邊（避免把名稱擠偏） */
+.cat-page-head .cph-center{text-align:center;font-size:17px;font-weight:700;display:flex;align-items:center;justify-content:center;white-space:nowrap;position:relative;}
+.cat-page-head .cph-center .cph-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:52vw;}
+.cat-page-head .cph-center .badge{position:absolute;left:100%;top:50%;transform:translate(6px,-50%);flex-shrink:0;}
 
 .cat-page-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px;justify-content:center;}
 .item-card .ck{position:absolute;top:10px;left:10px;z-index:5;display:none;}
@@ -235,7 +239,9 @@ a{color:var(--primary-deep); text-decoration:none;}
 .cos-qty{position:absolute;bottom:-3px;right:-3px;width:26px;height:26px;border-radius:50%;background:#fff;border:2px solid var(--primary);color:var(--primary-deep);font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.12);z-index:2;}
 .cos-qty.none{border-color:#A79A86;color:#A79A86;background:#F6F2EA;}
 .cos-info{flex:1;min-width:0;max-width:520px;}
-.cos-title{font-size:14.5px;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cos-title{font-size:14.5px;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:baseline;gap:6px;min-width:0;}
+.cos-title .ct-brand{flex-shrink:0;max-width:55%;overflow:hidden;text-overflow:ellipsis;}
+.cos-title .ct-shade{font-size:12.5px;font-weight:600;color:var(--text-light);overflow:hidden;text-overflow:ellipsis;}
 .cos-sub-row{display:flex;align-items:center;gap:6px;margin-top:3px;min-width:0;}
 .cos-sub{font-size:12px;color:var(--text-light);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0;}
 .cos-status{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;background:var(--info-bg);color:var(--info);flex-shrink:0;white-space:nowrap;}
@@ -1047,7 +1053,8 @@ function itemCardHTML(i, customMode){
   
   const price = i.price!=null && i.price!=='' ? num(i.price) : null;
   const exp=getExpiryInfo(i);
-  const expBadge = exp?`<span class="card-exp ${exp.status}">${exp.status==='expired'?'已到期':exp.status==='soon'?`剩${exp.diffDays}天`:'即期'}</span>`:'';
+  const expText = !exp ? '' : (exp.status==='expired' ? `-${Math.abs(exp.diffDays)}` : `${exp.diffDays}`);
+  const expBadge = exp?`<span class="card-exp ${exp.status}">${expText}</span>`:'';
   const qtyCls = q<=0?'none':(q<=2?'low':'');
   const mv = customMode?`<div class="mv-btns" onclick="event.stopPropagation()"><button class="btn soft sm" onclick="moveItem('${i.id}',-1)">↑</button><button class="btn soft sm" onclick="moveItem('${i.id}',1)">↓</button></div>`:'';
   
@@ -1057,10 +1064,10 @@ function itemCardHTML(i, customMode){
       <div class="card-img-wrap">
           <div class="card-img-inner">
               ${mainImg?`<img class="item-thumb" src="${mainImg.dataUrl}" alt="">`:`<div class="item-thumb noimg">${cat?.icon||'📦'}</div>`}
+              ${price!=null?`<span class="card-price">$${price}</span>`:''}
+              ${expBadge}
               <span class="card-qty ${qtyCls}">${q}</span>
           </div>
-          ${price!=null?`<span class="card-price">$${price}</span>`:''}
-          ${expBadge}
       </div>
       <div class="card-bottom">
           <span class="card-name">${esc(title)}</span>
@@ -1077,16 +1084,16 @@ function cosItemRowHTML(i){
   const mainImg = (i.images||[]).find(im=>im.isMain) || (i.images||[])[0];
   const q = qtyOf(i);
   const c = getCat(i.categoryId);
-  const brand = (i.custom && i.custom.f_cosm_brand) ? String(i.custom.f_cosm_brand) : '';
-  const shade = (i.custom && i.custom.f_cosm_shade) ? String(i.custom.f_cosm_shade) : '';
-  const title = [brand, shade].filter(Boolean).join('·') || itemTitle(i);
+  const brand = (i.custom && i.custom.f_cosm_brand) ? String(i.custom.f_cosm_brand).trim() : '';
+  const shade = (i.custom && i.custom.f_cosm_shade) ? String(i.custom.f_cosm_shade).trim() : '';
+  const fallbackTitle = (!brand && !shade) ? itemTitle(i) : '';
   const sub = (i.name && String(i.name).trim()) ? String(i.name) : ((i.custom && i.custom.f_cosm_sub) || '');
   const status = (i.custom && i.custom.f_cosm_status) ? String(i.custom.f_cosm_status) : '';
   const statusCls = status==='使用中'?'used' : status==='未使用'?'unused' : status==='已用完'?'empty' : '';
   const exp = getExpiryInfo(i);
   let expHTML = `<div class="cos-exp"><div class="d ok">∞</div><div class="date">無到期</div></div>`;
   if(exp){
-    const t = exp.status==='expired'?'已到期' : exp.status==='soon'?`剩 ${exp.diffDays} 天` : `${exp.diffDays} 天到期`;
+    const t = exp.status==='expired'?`已過期 ${Math.abs(exp.diffDays)} 天` : exp.status==='soon'?`剩 ${exp.diffDays} 天` : `${exp.diffDays} 天到期`;
     expHTML = `<div class="cos-exp"><div class="d ${exp.status}">${t}</div><div class="date">${fmtDate(exp.date.getTime())}</div></div>`;
   }
   const qtyCls = q<=0?'none':'';
@@ -1094,7 +1101,9 @@ function cosItemRowHTML(i){
       ${batchMode?`<input type="checkbox" class="ck" ${batchSel.has(i.id)?'checked':''} onclick="event.stopPropagation();toggleBatchSel('${i.id}')">`:''}
       <div class="cos-thumb">${mainImg?`<img src="${mainImg.dataUrl}" alt="">`:(c?c.icon:'💄')}<span class="cos-qty ${qtyCls}">${q}</span></div>
       <div class="cos-info">
-          <div class="cos-title">${esc(title)}</div>
+          <div class="cos-title">
+              ${brand?`<span class="ct-brand">${esc(brand)}</span>`:''}${shade?`<span class="ct-shade">${esc(shade)}</span>`:''}${fallbackTitle?esc(fallbackTitle):''}
+          </div>
           <div class="cos-sub-row">
               <span class="cos-sub">${esc(sub)}</span>
               ${status?`<span class="cos-status ${statusCls}">${esc(status)}</span>`:''}
