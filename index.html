@@ -226,6 +226,31 @@ a{color:var(--primary-deep); text-decoration:none;}
 .badge{font-size:11.5px;padding:2px 9px;border-radius:20px;font-weight:600;}
 .badge.orange{background:var(--primary-soft);color:var(--primary-deep);}
 
+/* ===== 保養品列表式呈現（參考圖樣式） ===== */
+.cos-list{display:flex;flex-direction:column;gap:12px;}
+.cos-item{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:18px;background:var(--card);box-shadow:var(--shadow);border:1px solid rgba(243,228,198,.6);cursor:pointer;position:relative;transition:.15s;}
+.cos-item:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg);}
+.cos-thumb{position:relative;width:56px;height:56px;border-radius:50%;overflow:visible;background:var(--bg2);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:26px;border:2px solid var(--accent2);}
+.cos-thumb img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
+.cos-qty{position:absolute;bottom:-3px;right:-3px;width:26px;height:26px;border-radius:50%;background:#fff;border:2px solid var(--primary);color:var(--primary-deep);font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.12);z-index:2;}
+.cos-qty.none{border-color:#A79A86;color:#A79A86;background:#F6F2EA;}
+.cos-info{flex:1;min-width:0;max-width:520px;}
+.cos-title{font-size:14.5px;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cos-sub-row{display:flex;align-items:center;gap:6px;margin-top:3px;min-width:0;}
+.cos-sub{font-size:12px;color:var(--text-light);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0;}
+.cos-status{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;background:var(--info-bg);color:var(--info);flex-shrink:0;white-space:nowrap;}
+.cos-status.used{background:var(--info-bg);color:var(--info);}
+.cos-status.unused{background:var(--primary-soft);color:var(--primary-deep);}
+.cos-status.empty{background:#F1EDE6;color:#A79A86;}
+.cos-exp{text-align:right;flex-shrink:0;padding-left:6px;}
+.cos-exp .d{font-size:12px;font-weight:800;white-space:nowrap;}
+.cos-exp .d.expired{color:var(--danger);}
+.cos-exp .d.soon{color:#E67E22;}
+.cos-exp .d.ok{color:var(--success);}
+.cos-exp .date{font-size:10.5px;color:var(--text-light);margin-top:2px;white-space:nowrap;}
+.cos-item .ck{position:absolute;top:10px;left:10px;z-index:5;display:none;}
+.cos-stat-line{display:flex;justify-content:center;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--text);margin:0 0 12px;background:var(--card);border-radius:30px;padding:7px 16px;box-shadow:var(--shadow);width:max-content;margin-left:auto;margin-right:auto;border:1px solid rgba(243,228,198,.6);}
+
 /* 品類內頁頂部（手機適配） */
 .cat-head{display:flex;align-items:center;justify-content:space-between;gap:10px 14px;flex-wrap:wrap;margin:6px 2px 14px;}
 .cat-head-title{display:flex;align-items:center;gap:8px;font-size:18px;font-weight:700;min-width:0;}
@@ -562,6 +587,7 @@ const PRESET_CATEGORIES = [
      {id:'f_cosm_sub', name:'品類細分', type:'select', options:['底妝','粉底液','粉餅','口紅','腮紅液','腮紅膏','眼影','眼線','睫毛膏','精華','乳液','面霜','面膜','洗卸','香水','其他']},
      {id:'f_cosm_cap', name:'容量', type:'text'},
      {id:'f_cosm_shade', name:'色號', type:'text'},
+     {id:'f_cosm_status', name:'使用狀態', type:'select', options:['使用中','未使用','已用完']},
      {id:'f_cosm_exp', name:'到期日', type:'date', isExpiry:true}
    ]}
 ];
@@ -643,6 +669,12 @@ function normalizeCategories(){
   });
   state.tags = [];
   state.items.forEach(it=>{ delete it.tags; });
+  // 為「化妝品保養品」品類補上「使用狀態」欄位（參考圖呈現用，不影響既有資料）
+  const cosm = state.categories.find(c=>c.id==='cat_cosm');
+  if(cosm && !(cosm.customFields||[]).some(f=>f.id==='f_cosm_status')){
+    cosm.customFields = cosm.customFields || [];
+    cosm.customFields.push({id:'f_cosm_status', name:'使用狀態', type:'select', options:['使用中','未使用','已用完'], isExpiry:false});
+  }
 }
 
 /* --- 自訂 Confirm 替代瀏覽器原生的 confirm() --- */
@@ -881,6 +913,9 @@ function openCat(id){ navigate('#/cat/'+id); }
 
 /* ---------- 品類列表頁 (支援自訂材質/分類篩選器) ---------- */
 let filterState = { q:'', customFilters:{} };
+/* 保養品品類檢視模式：list=橫式列表（參考圖）／grid=正方形網格；預設列表，切換後記住 */
+let cosViewMode = localStorage.getItem('cos_view') || 'list';
+function toggleCosView(){ cosViewMode = (cosViewMode==='list') ? 'grid' : 'list'; localStorage.setItem('cos_view', cosViewMode); renderCatList(); }
 function renderCatList(){
   const cat = getCat(currentCatId);
   if(!cat){ navigate('#/home'); return; }
@@ -946,16 +981,18 @@ function renderCatList(){
       <div class="cph-center"><span class="cph-name">${esc(cat.name)}</span><span class="badge orange">${items.length}</span></div>
     </div>
     ${filterHTML}
+    ${cat.id==='cat_cosm' && cosViewMode==='list'?`<div class="cos-stat-line">${items.length} 項　·　數量 ${items.reduce((s,i)=>s+Math.max(0,qtyOf(i)),0)}</div>`:''}
     <div class="cat-page-actions">
+      ${cat.id==='cat_cosm'?`<button class="btn soft sm" onclick="toggleCosView()">${cosViewMode==='list'?'▦ 網格檢視':'☰ 列表檢視'}</button>`:''}
       <label class="switch" title="切換排序模式"><input type="checkbox" ${isCustomSort?'checked':''} onchange="toggleCustomSort('${cat.id}',this.checked)"><span class="slider"></span></label>
       <span style="font-size:12.5px;color:var(--text-light)">自訂排序</span>
       ${batchMode?`<button class="btn danger sm" onclick="exitBatch()">取消批量</button>`:`<button class="btn soft sm" onclick="enterBatch()">批量</button>`}
       <button class="btn primary sm" onclick="openItemForm(null,'${cat.id}')">＋ 新增物品</button>
     </div>
     ${items.length===0?`<div class="empty-state"><div class="es-ico">${cat.icon}</div>此品類還沒有符合的物品<br><span>點「＋ 新增物品」開始收納</span></div>`:''}
-    <div class="item-grid ${batchMode?'batch-mode':''}" id="catItemGrid">
-      ${items.map(i=>itemCardHTML(i,isCustomSort)).join('')}
-    </div>
+    ${(cat.id==='cat_cosm' && cosViewMode==='list')
+      ? `<div class="cos-list ${batchMode?'batch-mode':''}" id="catItemGrid">${items.map(i=>cosItemRowHTML(i)).join('')}</div>`
+      : `<div class="item-grid ${batchMode?'batch-mode':''}" id="catItemGrid">${items.map(i=>itemCardHTML(i,isCustomSort)).join('')}</div>`}
     ${batchMode?`<div style="position:sticky;bottom:80px;margin-top:14px;background:var(--card);border-radius:18px;box-shadow:var(--shadow-lg);padding:12px 16px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;border:1.5px solid var(--primary);">
       <b style="font-size:13.5px">已選 <span id="batchCount">${batchSel.size}</span> 項</b>
       <button class="btn soft sm" onclick="batchChangeCat()">改品類</button>
@@ -1032,6 +1069,38 @@ function itemCardHTML(i, customMode){
               ${subItem?`<span class="card-cat-pill">${esc(subItem)}</span>`:''}
           </div>
       </div>
+  </div>`;
+}
+
+/* 保養品列表式行（參考圖樣式：圓形縮圖＋品牌·色號＋品項＋使用狀態＋數量＋到期） */
+function cosItemRowHTML(i){
+  const mainImg = (i.images||[]).find(im=>im.isMain) || (i.images||[])[0];
+  const q = qtyOf(i);
+  const c = getCat(i.categoryId);
+  const brand = (i.custom && i.custom.f_cosm_brand) ? String(i.custom.f_cosm_brand) : '';
+  const shade = (i.custom && i.custom.f_cosm_shade) ? String(i.custom.f_cosm_shade) : '';
+  const title = [brand, shade].filter(Boolean).join('·') || itemTitle(i);
+  const sub = (i.name && String(i.name).trim()) ? String(i.name) : ((i.custom && i.custom.f_cosm_sub) || '');
+  const status = (i.custom && i.custom.f_cosm_status) ? String(i.custom.f_cosm_status) : '';
+  const statusCls = status==='使用中'?'used' : status==='未使用'?'unused' : status==='已用完'?'empty' : '';
+  const exp = getExpiryInfo(i);
+  let expHTML = `<div class="cos-exp"><div class="d ok">∞</div><div class="date">無到期</div></div>`;
+  if(exp){
+    const t = exp.status==='expired'?'已到期' : exp.status==='soon'?`剩 ${exp.diffDays} 天` : `${exp.diffDays} 天到期`;
+    expHTML = `<div class="cos-exp"><div class="d ${exp.status}">${t}</div><div class="date">${fmtDate(exp.date.getTime())}</div></div>`;
+  }
+  const qtyCls = q<=0?'none':'';
+  return `<div class="cos-item" data-id="${i.id}" onclick="openItem('${i.id}')">
+      ${batchMode?`<input type="checkbox" class="ck" ${batchSel.has(i.id)?'checked':''} onclick="event.stopPropagation();toggleBatchSel('${i.id}')">`:''}
+      <div class="cos-thumb">${mainImg?`<img src="${mainImg.dataUrl}" alt="">`:(c?c.icon:'💄')}<span class="cos-qty ${qtyCls}">${q}</span></div>
+      <div class="cos-info">
+          <div class="cos-title">${esc(title)}</div>
+          <div class="cos-sub-row">
+              <span class="cos-sub">${esc(sub)}</span>
+              ${status?`<span class="cos-status ${statusCls}">${esc(status)}</span>`:''}
+          </div>
+      </div>
+      ${expHTML}
   </div>`;
 }
 
@@ -1165,7 +1234,7 @@ function renderDetail(){
                 </div>
                 <textarea id="detailStockNote" placeholder="說明請戳這裡～" style="width:100%; background:var(--bg); padding:12px 14px; border-radius:12px; border:1px solid var(--line); outline:none; font-size:13px; min-height:80px; resize:none; margin-bottom:12px; color:var(--text);"></textarea>
                 <div style="text-align:center;">
-                    <button class="btn primary" style="width:100%; max-width:200px; padding:12px; border-radius:30px; box-shadow:var(--shadow); font-size:14px;" onclick="submitDetailStock()">確認紀錄</button>
+                    <button class="btn primary" style="width:100%; max-width:200px; padding:12px; border-radius:30px; box-shadow:var(--shadow); font-size:14px; justify-content:center;" onclick="submitDetailStock()">確認紀錄</button>
                 </div>
                 ${records.length > 0 ? `
                 <div style="margin-top:20px; padding-top:16px; border-top:1px solid rgba(243,228,198,.6); max-height:240px; overflow-y:auto;" class="hide-scrollbar">
